@@ -1,0 +1,269 @@
+{
+  "input_h5ad": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/delta_axis_v2/_job_input/clonality_input.h5ad",
+  "semantic_map": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/delta_axis_v2/_job_input/clonality_semantic_map.pt",
+  "model_cache_dir": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/models/.model_cache_delta_axis_v2/e969152b7a",
+  "out_dir": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/delta_axis_v2",
+  "donor_key": "donor",
+  "batch_key": "study",
+  "labels_key": "cell_type_T",
+  "train_pool_key": "train_pool",
+  "max_epochs": 100,
+  "warmup_epochs": 20,
+  "n_epochs_kl_warmup": 100,
+  "models": {
+    "structural": {
+      "kwargs": {
+        "n_latent": 10,
+        "n_layers": 2,
+        "n_hidden": 128,
+        "dropout_rate": 0.1,
+        "gene_likelihood": "nb",
+        "weights_positive": true,
+        "use_batch_norm": false,
+        "decoder_mode": "structural",
+        "scale_mode": "decoupled",
+        "logit_scale_init": 15.0,
+        "logit_scale_min": 5.0,
+        "logit_scale_max": 30.0,
+        "learn_scale": true,
+        "b_mode": "quantile",
+        "b_quantile": 0.9,
+        "b_slack": 0.0,
+        "b_detach": true,
+        "alpha_init": "kmeans_expr",
+        "learn_alpha": true,
+        "missing_residual": false,
+        "usage_balance_weight": 0.0,
+        "usage_balance_mode": "entropy"
+      },
+      "warmup_epochs": 0
+    },
+    "structural_donor": {
+      "kwargs": {
+        "n_latent": 10,
+        "n_layers": 2,
+        "n_hidden": 128,
+        "dropout_rate": 0.1,
+        "gene_likelihood": "nb",
+        "weights_positive": true,
+        "use_batch_norm": false,
+        "decoder_mode": "structural",
+        "scale_mode": "decoupled",
+        "logit_scale_init": 15.0,
+        "logit_scale_min": 5.0,
+        "logit_scale_max": 30.0,
+        "learn_scale": true,
+        "b_mode": "quantile",
+        "b_quantile": 0.9,
+        "b_slack": 0.0,
+        "b_detach": true,
+        "alpha_init": "kmeans_expr",
+        "learn_alpha": true,
+        "missing_residual": false,
+        "usage_balance_weight": 0.0,
+        "usage_balance_mode": "entropy"
+      },
+      "warmup_epochs": 0,
+      "batch_key": "donor"
+    }
+  },
+  "runs": [
+    {
+      "name": "structural_all",
+      "cache_key": "all",
+      "model": "structural",
+      "held_out": []
+    },
+    {
+      "name": "structural_donor_all",
+      "cache_key": "all",
+      "model": "structural_donor",
+      "held_out": []
+    },
+    {
+      "name": "structural_fold0",
+      "cache_key": "fold0",
+      "model": "structural",
+      "held_out": [
+        "Li2024_atlas__PT50",
+        "Li2024_atlas__CTCL3",
+        "Li2024_atlas__CTCL7",
+        "D15__MF28"
+      ]
+    },
+    {
+      "name": "structural_fold1",
+      "cache_key": "fold1",
+      "model": "structural",
+      "held_out": [
+        "Li2024_atlas__CTCL4",
+        "D3__P192",
+        "Li2024_atlas__CTCL1"
+      ]
+    },
+    {
+      "name": "structural_fold2",
+      "cache_key": "fold2",
+      "model": "structural",
+      "held_out": [
+        "D1__P312",
+        "Li2024_atlas__CTCL5",
+        "D15__MF26"
+      ]
+    },
+    {
+      "name": "structural_fold3",
+      "cache_key": "fold3",
+      "model": "structural",
+      "held_out": [
+        "D1__P204",
+        "D13__MF18",
+        "Li2024_atlas__CTCL8"
+      ]
+    },
+    {
+      "name": "structural_fold4",
+      "cache_key": "fold4",
+      "model": "structural",
+      "held_out": [
+        "B5__PT09",
+        "D15__MF36",
+        "D1__PGS"
+      ]
+    },
+    {
+      "name": "structural_fold5",
+      "cache_key": "fold5",
+      "model": "structural",
+      "held_out": [
+        "D1__P171",
+        "D3__P196",
+        "Li2024_atlas__PT11"
+      ]
+    },
+    {
+      "name": "structural_fold6",
+      "cache_key": "fold6",
+      "model": "structural",
+      "held_out": [
+        "D1__P76",
+        "Li2024_atlas__PT47",
+        "D15__MF35"
+      ]
+    },
+    {
+      "name": "structural_fold7",
+      "cache_key": "fold7",
+      "model": "structural",
+      "held_out": [
+        "D15__MF30",
+        "Li2024_atlas__PT56",
+        "B5__PT23"
+      ]
+    },
+    {
+      "name": "structural_fold8",
+      "cache_key": "fold8",
+      "model": "structural",
+      "held_out": [
+        "Li2024_atlas__PT53",
+        "D13__MF19",
+        "D1__P311"
+      ]
+    },
+    {
+      "name": "structural_fold9",
+      "cache_key": "fold9",
+      "model": "structural",
+      "held_out": [
+        "D15__MF24",
+        "Li2024_atlas__CTCL2",
+        "Li2024_atlas__PT35"
+      ]
+    },
+    {
+      "name": "structural_fold10",
+      "cache_key": "fold10",
+      "model": "structural",
+      "held_out": [
+        "D13__MF17",
+        "D15__MF34",
+        "D1__P303"
+      ]
+    },
+    {
+      "name": "structural_fold11",
+      "cache_key": "fold11",
+      "model": "structural",
+      "held_out": [
+        "Li2024_atlas__CTCL6",
+        "D15__MF48",
+        "D3__P105"
+      ]
+    }
+  ],
+  "folds": [
+    [
+      "Li2024_atlas__PT50",
+      "Li2024_atlas__CTCL3",
+      "Li2024_atlas__CTCL7",
+      "D15__MF28"
+    ],
+    [
+      "Li2024_atlas__CTCL4",
+      "D3__P192",
+      "Li2024_atlas__CTCL1"
+    ],
+    [
+      "D1__P312",
+      "Li2024_atlas__CTCL5",
+      "D15__MF26"
+    ],
+    [
+      "D1__P204",
+      "D13__MF18",
+      "Li2024_atlas__CTCL8"
+    ],
+    [
+      "B5__PT09",
+      "D15__MF36",
+      "D1__PGS"
+    ],
+    [
+      "D1__P171",
+      "D3__P196",
+      "Li2024_atlas__PT11"
+    ],
+    [
+      "D1__P76",
+      "Li2024_atlas__PT47",
+      "D15__MF35"
+    ],
+    [
+      "D15__MF30",
+      "Li2024_atlas__PT56",
+      "B5__PT23"
+    ],
+    [
+      "Li2024_atlas__PT53",
+      "D13__MF19",
+      "D1__P311"
+    ],
+    [
+      "D15__MF24",
+      "Li2024_atlas__CTCL2",
+      "Li2024_atlas__PT35"
+    ],
+    [
+      "D13__MF17",
+      "D15__MF34",
+      "D1__P303"
+    ],
+    [
+      "Li2024_atlas__CTCL6",
+      "D15__MF48",
+      "D3__P105"
+    ]
+  ],
+  "notes": "nb38 \u03b4\u0302 gene axis (v2 skin atlas): leave-3-out over 38 holdout-eligible donors (12 folds) + an all-donor reference, x 2 arms (structural, structural_donor; structural_donor is all-donor only because a held-out donor's batch category has no trained embedding). Geneformer geometric prior, HVG=2500, n_latent=10, batch=study. Cohort: 401851 CD4 cells / 114 donors from alice_malignancy_v4 + skin_T_tcr_annotated_v4."
+}

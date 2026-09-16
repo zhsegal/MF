@@ -1,0 +1,32 @@
+# --- heavy artifact trees (kept on disk, never in git) ---
+data/*
+models/
+figures/
+tables/
+benchmark_results/
+logs/
+
+# the v2 cohort-onboarding scripts and their notes DO belong in git
+!data/*.py
+!data/*.md
+!data/*.sh
+
+# --- runtime / caches ---
+__pycache__/
+.ipynb_checkpoints/
+*.bsub.log
+*.pyc
+.DS_Store
+.claude/
+
+# --- data / model file types, wherever they land ---
+*.h5ad
+*.h5
+*.hdf5
+*.parquet
+*.npy
+*.npz
+*.nc
+*.pt
+*.pth
+*.ckpt

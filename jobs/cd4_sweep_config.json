@@ -1,0 +1,62 @@
+{
+  "input_h5ad": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/cd4_atlas_semantic_sweep/_job_input/cd4_sweep_input.h5ad",
+  "semantic_map": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/cd4_atlas_semantic_sweep/_job_input/cd4_sweep_semantic_map.pt",
+  "model_cache_dir": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/models/.model_cache_semantic_geom_cd4_atlas/semantic_scvi_sweep",
+  "out_dir": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/cd4_atlas_semantic_sweep",
+  "lib1_gmt": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/lib1_immune.gmt",
+  "lib2_gmt": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/lib2_cd4.gmt",
+  "pathway_index": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/pathway_index.pkl",
+  "batch_key": "sample_id",
+  "labels_key": "cell_type_T",
+  "per_projection_n_top": 30,
+  "cell_type_context": "CD4 T cells from cutaneous T-cell lymphoma (mycosis fungoides) skin, spanning benign reactive and malignant clonal states",
+  "fixed_kwargs": {
+    "loss_mode": "geometric",
+    "n_gene_sample": 1024,
+    "n_latent": 10,
+    "n_hidden": 128,
+    "dropout_rate": 0.1,
+    "gene_likelihood": "nb",
+    "weights_positive": true,
+    "use_batch_norm": false
+  },
+  "variants": [
+    {
+      "name": "sem_baseline",
+      "cache_key": "8f2e45825c",
+      "max_epochs": 200,
+      "warmup_epochs": 20,
+      "n_epochs_kl_warmup": 100,
+      "coherence_weight": 1000.0,
+      "n_layers": 1
+    },
+    {
+      "name": "sem_cw500",
+      "cache_key": "b4acc56ec5",
+      "max_epochs": 200,
+      "warmup_epochs": 20,
+      "n_epochs_kl_warmup": 100,
+      "coherence_weight": 500.0,
+      "n_layers": 1
+    },
+    {
+      "name": "sem_cw2000",
+      "cache_key": "458e5a7f5c",
+      "max_epochs": 200,
+      "warmup_epochs": 20,
+      "n_epochs_kl_warmup": 100,
+      "coherence_weight": 2000.0,
+      "n_layers": 1
+    },
+    {
+      "name": "sem_cw3000",
+      "cache_key": "55dc715ca8",
+      "max_epochs": 200,
+      "warmup_epochs": 20,
+      "n_epochs_kl_warmup": 100,
+      "coherence_weight": 3000.0,
+      "n_layers": 1
+    }
+  ],
+  "notes": "SemanticSCVI sweep [Geneformer, CD4 CTCL atlas, projections-only]: 4 variant(s). Fixed: n_latent=10, HVG_TOP_N=2500, SUBSAMPLE_FRACTION=0.333, PER_PROJECTION_N_TOP=30. LLM judge: Opus only; MSigDB: lib1_immune + lib2_cd4."
+}
