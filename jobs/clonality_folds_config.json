@@ -1,8 +1,8 @@
 {
-  "input_h5ad": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/delta_axis_v2/_job_input/clonality_input.h5ad",
-  "semantic_map": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/delta_axis_v2/_job_input/clonality_semantic_map.pt",
-  "model_cache_dir": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/models/.model_cache_delta_axis_v2/e969152b7a",
-  "out_dir": "/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF/benchmark_results/delta_axis_v2",
+  "input_h5ad": "/home/projects/nyosef/zvise/MF/benchmark_results/delta_axis_v2/_job_input/clonality_input.h5ad",
+  "semantic_map": "/home/projects/nyosef/zvise/MF/benchmark_results/delta_axis_v2/_job_input/clonality_semantic_map.pt",
+  "model_cache_dir": "/home/projects/nyosef/zvise/MF/models/.model_cache_delta_axis_v2/e969152b7a",
+  "out_dir": "/home/projects/nyosef/zvise/MF/benchmark_results/delta_axis_v2",
   "donor_key": "donor",
   "batch_key": "study",
   "labels_key": "cell_type_T",
