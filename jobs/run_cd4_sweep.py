@@ -2,12 +2,12 @@
 """SemanticSCVI hyperparameter sweep — CD4 CTCL atlas (projections-only benchmark).
 
 Trains every sweep variant (cached) on the slim CD4 input written by
-19_semantic_cd4_atlas_sweep.ipynb, runs the projection-only SemanticBenchmark
+old/19_semantic_cd4_atlas_sweep.ipynb, runs the projection-only SemanticBenchmark
 (Opus LLM judge + MSigDB lib1/lib2 enrichment), and builds the combined HTML
 report. No gene clustering.
 
 Config + slim input (adata + semantic_map) are produced by the notebook's
-"write job input" cell. Submit via notebooks/MF/jobs/run_cd4_sweep.sh.
+"write job input" cell. Submit via jobs/run_cd4_sweep.sh.
 """
 import json
 import shutil
@@ -16,7 +16,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-NB_MF = Path(__file__).resolve().parent.parent      # notebooks/MF
+NB_MF = Path(__file__).resolve().parent.parent      # the MF project root
 NB = NB_MF.parent                                     # notebooks
 for _p in (str(NB_MF), str(NB)):
     if _p not in sys.path:
@@ -40,7 +40,7 @@ CONFIG = NB_MF / "jobs" / "cd4_sweep_config.json"
 def main():
     if not CONFIG.exists():
         sys.exit(f"missing {CONFIG}\nrun the 'write job input' cell of "
-                 "19_semantic_cd4_atlas_sweep.ipynb first")
+                 "old/19_semantic_cd4_atlas_sweep.ipynb first")
     cfg = json.loads(CONFIG.read_text())
 
     out_dir = Path(cfg["out_dir"]); out_dir.mkdir(parents=True, exist_ok=True)

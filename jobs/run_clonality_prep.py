@@ -19,7 +19,7 @@ from pathlib import Path
 
 JOB_DIR = Path(__file__).resolve().parent
 NB_MF = JOB_DIR.parent
-NOTEBOOK = NB_MF / "37_semantic_clonality_transfer.ipynb"
+NOTEBOOK = NB_MF / "notebooks" / "old" / "37_semantic_clonality_transfer.ipynb"
 
 # Part 0 through the config-writing cell. Identified by a source prefix rather than an index
 # so that inserting a markdown cell upstream cannot silently shift the range.

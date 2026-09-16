@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """MrVI sample-level diagnostics: donor distances + differential abundance.
 
-Mirrors cells `donor-dist` + `diff-abund` of notebooks/MF/03_mrvi_replication.ipynb.
+Mirrors cells `donor-dist` + `diff-abund` of notebooks/old/03_mrvi_replication.ipynb.
 """
 import argparse
 import os

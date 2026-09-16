@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Standalone MrVI donor-level stage_group DE on T-cells.
 
-Mirrors cells `9564f223` + `8e51d2a7` of notebooks/MF/02_mrvi.ipynb.
+Mirrors cells `9564f223` + `8e51d2a7` of notebooks/old/02_mrvi.ipynb.
 Reads the cached HVG adata + saved MrVI model; writes a netcdf.
 
-Submit via notebooks/MF/jobs/run_mrvi_de.sh.
+Submit via jobs/run_mrvi_de.sh.
 """
 import argparse
 import os
@@ -58,7 +58,7 @@ def preflight(malignant_only: bool):
     if missing:
         sys.exit(
             "missing required inputs:\n" + "\n".join(missing) +
-            "\n\nrun notebooks/MF/02_mrvi.ipynb through the re-cache cell "
+            "\n\nrun notebooks/old/02_mrvi.ipynb through the re-cache cell "
             "(just before the DE section) once interactively to materialize "
             "the cache, then resubmit.")
 

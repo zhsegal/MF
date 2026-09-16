@@ -1,6 +1,6 @@
 """Headless OLGA Pgen / ALICE sweep for nb21 (heavy step, CPU).
 
-Reproduces the load + cohort + ALICE pipeline of ``21_tcr_alice_neighborhood.ipynb`` and
+Reproduces the load + cohort + ALICE pipeline of ``old/21_tcr_alice_neighborhood.ipynb`` and
 writes the two cached results the notebook reads:
   data/atlas_joint/alice_cd4_per_donor.parquet   (Use 1)
   data/atlas_joint/alice_cd8.parquet             (Use 3, per-donor + per-stage)
@@ -10,7 +10,7 @@ Re-run is cheap once cached. Use ``--force`` to recompute.
 import sys
 from pathlib import Path
 
-NB_DIR = Path(__file__).resolve().parents[1]   # .../notebooks/MF
+NB_DIR = Path(__file__).resolve().parents[1]   # the MF project root
 sys.path.insert(0, str(NB_DIR))
 
 import numpy as np

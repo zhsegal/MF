@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Execute 42_tme_degradome.ipynb end-to-end. CPU only -- nothing here trains.
+# Execute notebooks/20_skin/28_tme_degradome.ipynb end-to-end. CPU only -- nothing here trains.
 set -eo pipefail
 
-NB_DIR=/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF
+NB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYBIN=/home/projects/nyosef/zvise/.local/share/mamba/envs/neural_nmf_env/bin/python
-NB="$NB_DIR/42_tme_degradome.ipynb"
+NB="$NB_DIR/notebooks/20_skin/28_tme_degradome.ipynb"
 
 cd "$NB_DIR"
 echo "[nb42] $(date) host=$(hostname)"

@@ -2,7 +2,7 @@
 """Train MrVI on T-cells with malignant/benign pseudo-samples, then DE.
 
 Mirrors cells `mrvi-mb-prep` + `mrvi-mb-fit` + `mrvi-mb-de` of
-notebooks/MF/03_mrvi_replication.ipynb.
+notebooks/old/03_mrvi_replication.ipynb.
 """
 import argparse
 import json

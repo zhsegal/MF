@@ -17,7 +17,7 @@ and differ only in what the notebook writes into `models`:
     scvi         SCVI, use_batch_norm="encoder", likelihood nb (nonlinear decoder)
 
 Config + slim input (adata + semantic_map) come from the "write job input" cell of
-38_delta_gene_axis.ipynb Part A. Submit via notebooks/MF/jobs/run_clonality_folds.sh.
+notebooks/20_skin/25_delta_gene_axis.ipynb Part A. Submit via jobs/run_clonality_folds.sh.
 
 Usage:
     python run_clonality_folds.py                        # every run in the config
@@ -31,7 +31,7 @@ import sys
 import time
 from pathlib import Path
 
-NB_MF = Path(__file__).resolve().parent.parent      # notebooks/MF
+NB_MF = Path(__file__).resolve().parent.parent      # the MF project root
 NB = NB_MF.parent                                   # notebooks
 for _p in (str(NB_MF), str(NB)):
     if _p not in sys.path:
@@ -142,7 +142,7 @@ def main():
 
     if not CONFIG.exists():
         sys.exit(f"missing {CONFIG}\nrun the 'write job input' cell of "
-                 "38_delta_gene_axis.ipynb (Part A) first")
+                 "notebooks/20_skin/25_delta_gene_axis.ipynb (Part A) first")
     cfg = json.loads(CONFIG.read_text())
 
     out_dir = Path(cfg["out_dir"]); out_dir.mkdir(parents=True, exist_ok=True)

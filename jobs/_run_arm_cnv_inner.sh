@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Inner script: execute nb30 (malignancy TCR+CNV) headless on the bsub-allocated node.
+# Inner script: execute 20_skin/23_malignancy_tcr_cnv headless on the bsub-allocated node.
 # CPU-only (infercnvpy + OLGA); the arm-CNV step uses all allocated cores via os.sched_getaffinity.
 set -eu
-MF_DIR="/home/projects/nyosef/zvise/scvi-tools-neural-nmf/notebooks/MF"
-NB="$MF_DIR/30_malignant_annotation_tcr_cnv.ipynb"
+MF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+NB="$MF_DIR/notebooks/20_skin/23_malignancy_tcr_cnv.ipynb"
 
 source /home/projects/nyosef/zvise/.local/share/mamba/etc/profile.d/mamba.sh
 mamba activate neural_nmf_env

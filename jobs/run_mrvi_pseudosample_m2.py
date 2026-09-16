@@ -6,8 +6,8 @@ Trains MrVI with sample_key="pseudo_sample", batch_key="study" on ALL T cells
 (unknown included), then persists the u (sample-unaware) and z latents per cell.
 The notebook builds per-cluster anchor centroids from z and scores every cell.
 
-Input h5ad is built by 17_mrvi_pseudosample_malignancy.ipynb (anchor logic lives
-there). Submit via notebooks/MF/jobs/run_mrvi_pseudosample_m2.sh.
+Input h5ad is built by old/17_mrvi_pseudosample_malignancy.ipynb (anchor logic lives
+there). Submit via jobs/run_mrvi_pseudosample_m2.sh.
 """
 import argparse
 import json
@@ -49,7 +49,7 @@ def parse_args():
 def preflight():
     if not INPUT_H5AD.exists():
         sys.exit(f"missing input: {INPUT_H5AD}\n"
-                 "run 17_mrvi_pseudosample_malignancy.ipynb through the "
+                 "run old/17_mrvi_pseudosample_malignancy.ipynb through the "
                  "'build pseudo-samples + job input' cell first")
 
 

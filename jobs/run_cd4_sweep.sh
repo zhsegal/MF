@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Submit the CD4 CTCL atlas SemanticSCVI sweep (train all variants + projection
 # benchmark + report) to gsla_high_gpu. Reads jobs/cd4_sweep_config.json + the
-# slim input written by 19_semantic_cd4_atlas_sweep.ipynb.
+# slim input written by old/19_semantic_cd4_atlas_sweep.ipynb.
 # Usage:
 #   ./run_cd4_sweep.sh
 #   MEM_MB=192000 WALL_H=96 ./run_cd4_sweep.sh

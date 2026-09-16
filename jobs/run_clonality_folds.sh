@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Submit the leave-3-samples-out fold training for nb38 (the malignancy axis delta-hat). Reads
-# jobs/clonality_folds_config.json + the slim input written by 38_delta_gene_axis.ipynb Part A;
+# jobs/clonality_folds_config.json + the slim input written by notebooks/20_skin/25_delta_gene_axis.ipynb Part A;
 # writes z_<run>.npy per run into cfg["out_dir"]. Which arms run is whatever the config lists
 # (nb38: structural + structural_donor; the v1 nb37 config also had semantic / ldvae / scvi).
 #
