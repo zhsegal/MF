@@ -45,6 +45,7 @@ from scipy import sparse                 # noqa: E402
 
 import cluster_malig_helpers as CM       # noqa: E402
 import malignancy as MAL                 # noqa: E402
+import lineage as LIN
 import surface_targets as ST             # noqa: E402
 
 OUT_DIR = NB_DIR / "data" / "targets"
@@ -133,7 +134,7 @@ def main():
         lvl = pd.Series(np.asarray(MAL.cd4_level(obs[cfg["celltype"]], mal,
                                                  call=MAL.HEADLINE)).astype(str), index=obs.index)
         is_hc = obs["disease"].astype(str).eq("HC").to_numpy()
-        is_cd4 = obs[cfg["celltype"]].astype(str).eq("CD4").to_numpy()
+        is_cd4 = obs[cfg["celltype"]].astype(str).isin(LIN.CD4_ANY).to_numpy()
         # HC CD4 is its own arm. Folding it into "reactive" would make that arm mean two things:
         # the benign cells beside a tumour, and the T cells of a person who has no tumour.
         lvl[is_cd4 & is_hc] = "CD4_HC"

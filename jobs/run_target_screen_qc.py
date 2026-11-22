@@ -69,6 +69,7 @@ from scipy import stats                  # noqa: E402
 
 import cluster_malig_helpers as CM       # noqa: E402
 import malignancy as MAL                 # noqa: E402
+import lineage as LIN
 import surface_targets as ST             # noqa: E402
 import target_cohort as TC               # noqa: E402
 import target_qc as TQ                   # noqa: E402
@@ -266,7 +267,7 @@ def main():
         log(f"malignancy call: {call} "
             f"({mal[call].notna().mean():.1%} of cells defined)"
             if call in mal else f"malignancy call: {call}")
-        is_cd4 = obs[cfg["celltype"]].astype(str).eq("CD4").to_numpy()
+        is_cd4 = obs[cfg["celltype"]].astype(str).isin(LIN.CD4_ANY).to_numpy()
         # The atlas `disease` column calls the five geskin healthy donors SS, so CD4_HC is set
         # here from the curated diagnosis instead. Without this their cells sit in CD4_reactive
         # and are read as the benign compartment beside a tumour.

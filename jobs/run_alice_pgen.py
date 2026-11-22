@@ -21,6 +21,8 @@ import alice_helpers as A
 
 FORCE = "--force" in sys.argv
 FRAC_THRESH, RATIO_THRESH, EXPANDED_MIN = 0.05, 1.33, 2
+# v1-era vocabulary, deliberately not migrated: this job feeds ALICE, which feeds
+# mal_cluster, which the re-annotation was derived from. See helpers/lineage.py.
 CD4_T_TYPES = ["CD4_Cm", "CD4_Th2", "CD4_cytotoxic", "CD4_mem"]
 CD8_T_TYPES = ["CD8_effector", "CD8_em"]
 DROP_ENTITIES = {"MF_gamma_delta", "CD8_aggressive_epidermotropic_CTCL"}

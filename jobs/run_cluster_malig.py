@@ -109,7 +109,10 @@ def main():
     t0 = time.time()
 
     with h5py.File(CM.TCR_OBJ, "r") as h5:
-        obs = CM.read_obs(h5)
+        # lineage=False on purpose: this job FEEDS mal_cluster, and the re-annotated labels were
+        # themselves derived from mal_cluster. Overlaying them here would move the call that the
+        # labels depend on. See helpers/lineage.py.
+        obs = CM.read_obs(h5, lineage=False)
         genes = pd.Index(CM._read_elem(h5["var"][h5["var"].attrs["_index"]])).astype(str)
         g = h5["layers"][CM.COUNTS]
         expr = np.diff(g["indptr"][:]) > 0

@@ -173,13 +173,19 @@ def _read_elem(g):
     return read_elem(g)
 
 
-def read_obs(h5, cols=None):
+def read_obs(h5, cols=None, lineage=True):
     """Selected obs columns of an open h5ad, indexed by obs_names.
 
     Resolved at call time, not at import: `use_tissue` rebinds OBS_COLS. Columns the object does
     not carry are returned empty rather than raising -- blood has no `stage_class` or `tech`, and
     a missing design column must surface as an empty column in the manifest, not a KeyError four
     hours into a job.
+
+    `lineage=True` (the default) overlays the re-annotated T/NK lineage call on `cell_type_T`
+    via `helpers/lineage.py`, so every downstream arm is built on it without each job having to
+    remember. **Pass `lineage=False` in the cluster-malignancy pipeline only**: `CELL_TYPES` and
+    `MIN_CD4` below define a benign cluster by its CD4 *composition*, so feeding the new labels
+    back in would move the very `mal_cluster` call those labels were derived from.
     """
     cols = list(OBS_COLS if cols is None else cols)
     g = h5["obs"]
@@ -191,7 +197,11 @@ def read_obs(h5, cols=None):
         warnings.warn(f"obs columns absent from the object, filled empty: {missing}")
     out = pd.DataFrame({c: (_read_elem(g[c]) if c in have else "") for c in cols},
                        index=pd.Index(idx, name="cell_id"))
-    return apply_celltype_fix(out)
+    out = apply_celltype_fix(out)
+    if lineage:
+        import lineage as LIN
+        out = LIN.apply_lineage(out, TISSUE)
+    return out
 
 
 def apply_celltype_fix(obs, path=None):

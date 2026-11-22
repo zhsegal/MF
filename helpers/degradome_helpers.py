@@ -11,7 +11,7 @@ Two halves, and the split is load-bearing.
   `degradome_cells.py`, because the unit of analysis is the cell and everything here is about
   getting a correct object to analyse.
 
-What is NOT here any more. The v1 notebook (`notebooks/old/28_tme_degradome_v1.ipynb`) carried a
+What is NOT here any more. The v1 notebook (`notebooks/_archive/old/28_tme_degradome_v1.ipynb`) carried a
 donor-pseudobulk DESeq2 arm, an epidermis/dermis contrast, a source-attribution cube and a
 subclone axis. All four are gone with it: the analysis is single-cell and study-blocked now, and
 carrying a second statistical framework that nothing calls is how the frozen v1 constants
@@ -168,7 +168,16 @@ def build_degradome_level(obs, subtype_csv=None, malignancy=None, verbose=True):
         malignancy = MAL.load_malignancy(
             ids, has_tcr=obs["has_tcr"] if "has_tcr" in obs.columns else None,
             verbose=verbose)
-    base = pd.Series(MAL.cd4_level(obs[cfg.CELLTYPE_SRC], malignancy,
+    # The lineage column arrives from the degradome object, not through
+    # cluster_malig_helpers.read_obs, so the re-annotation overlay has to be applied here or the
+    # CD4 split silently rebuilds the old contaminated arm. Non-T levels (Keratinocyte,
+    # Fibroblast, ...) are absent from the label table and pass through untouched.
+    import lineage as LIN
+    _ct = LIN.apply_lineage(
+        pd.DataFrame({cfg.CELLTYPE_SRC: obs[cfg.CELLTYPE_SRC].astype(str).to_numpy()},
+                     index=pd.Index(ids, name="cell_id")),
+        "skin", col=cfg.CELLTYPE_SRC)[cfg.CELLTYPE_SRC]
+    base = pd.Series(MAL.cd4_level(_ct.to_numpy(), malignancy,
                                    call=cfg.MALIG_HEADLINE).astype(str), index=obs.index)
 
     # ---- myeloid / fibroblast subtypes

@@ -9,7 +9,7 @@ together:
   `mal_cnv`  inferCNV arm consensus (nb23 Step 6). Defined only for donors where the arm pass
              found a signature (`cnv_callable`).
   `mal_knn`  Label propagation over the MrVI u latent (retired nb26, now
-             `notebooks/old/26_transcriptome_malignancy_holdout.ipynb`): LabelSpreading(
+             `notebooks/_archive/old/26_transcriptome_malignancy_holdout.ipynb`): LabelSpreading(
              kernel="knn", k=20, alpha=0.2), anchored on ALICE, thresholded at a fixed 0.5.
              Defined for every CD4 cell that has expression. It was the headline until
              2026-10-22; it is now a sensitivity arm only.
@@ -289,15 +289,28 @@ def concordance(mal, by=None):
     return pd.DataFrame(rows)
 
 
-def cd4_level(cell_type_final, mal, call=HEADLINE):
+def cd4_level(cell_type_final, mal, call=HEADLINE, cd4_set=None):
     """CD4 -> {CD4_malignant, CD4_reactive, CD4_unassessed}; other types pass through.
 
     `CD4_unassessed` is a real level, not a dustbin: it is the cells `call` could not be
     evaluated on. Folding them into reactive would make "non-malignant CD4" mean "malignant
     was not detected", which is a different statement.
+
+    What counts as CD4 comes from `helpers/lineage.py`, not from a literal. The re-annotation
+    (`nonmal_T_labels_v1`) renamed the benign CD4 cells to `CD4_conv`/`CD4_naive` and moved the
+    CD8, NK and Treg cells that the old per-cluster `CD4` label had swept in; the malignant
+    cells are absent from that table and keep the old `CD4`, so the set holds both. A literal
+    `== "CD4"` here would silently return an empty CD4 arm.
     """
     ct = pd.Series(cell_type_final).astype(str).to_numpy().copy()
-    is_cd4 = ct == "CD4"
+    if cd4_set is None:
+        import lineage as LIN
+        cd4_set = LIN.cd4_set(TISSUE or "skin")
+    is_cd4 = np.isin(ct, list(cd4_set))
+    if not is_cd4.any():
+        raise AssertionError(
+            f"cd4_level: no cell matched the CD4 set {sorted(cd4_set)} -- the frame's lineage "
+            f"column is probably pre-overlay or from the wrong tissue (TISSUE={TISSUE!r})")
     d = mal[f"{call}_defined"].to_numpy()
     v = mal[call].to_numpy()
     ct[is_cd4 & ~d] = "CD4_unassessed"

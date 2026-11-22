@@ -44,6 +44,7 @@ import pandas as pd                      # noqa: E402
 
 import cluster_malig_helpers as CM       # noqa: E402
 import malignancy as MAL                 # noqa: E402
+import lineage as LIN
 import target_cohort as TC               # noqa: E402
 from run_target_screen_qc import TISSUE, read_block, row_sums, log   # noqa: E402
 
@@ -99,7 +100,7 @@ def main():
                                   verbose=False)
         lvl = pd.Series(np.asarray(MAL.cd4_level(obs[cfg["celltype"]], mal,
                                                  call=call)).astype(str), index=obs.index)
-        is_cd4 = obs[cfg["celltype"]].astype(str).eq("CD4").to_numpy()
+        is_cd4 = obs[cfg["celltype"]].astype(str).isin(LIN.CD4_ANY).to_numpy()
         don_tbl = TC.donor_table(args.tissue, obj=cfg["obj"])
         donor = obs[cfg["donor"]].astype(str)
         is_hc = donor.map(don_tbl["is_hc"]).fillna(False).to_numpy()

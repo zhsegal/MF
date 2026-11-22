@@ -68,7 +68,12 @@ s_genes = [g for g in S.CC_S_GENES if g in B.var_names]; g2m_genes = [g for g in
 sc.tl.score_genes_cell_cycle(B, s_genes=s_genes, g2m_genes=g2m_genes)
 A.obs["S_score"] = B.obs["S_score"].to_numpy(); A.obs["G2M_score"] = B.obs["G2M_score"].to_numpy()
 A.obs["is_cycling"] = ((A.obs["S_score"] > a.cc_thr) | (A.obs["G2M_score"] > a.cc_thr)).to_numpy()
-A.obs["is_treg"] = False          # cohort is cell_type_T == "CD4"; CD4_Treg is a separate label, already excluded
+# Was hardcoded False on the claim that CD4_Treg is a separate label so Tregs were already
+# excluded. That was only true of the label, not of the cells: the old per-cluster "CD4" carried
+# a Treg admixture (reports/ccc52_mvb/qc_benign_arm/). Read it from the re-annotation instead.
+import lineage as LIN
+_lin = LIN.load_labels()
+A.obs["is_treg"] = (pd.Series(_lin["label_new"]).reindex(A.obs_names).to_numpy() == "CD4_Treg")
 del B
 flt = (A.obs.assign(n=1, cyc=A.obs["is_cycling"].astype(int), unl=A.obs["unlabelled_in_decomposed"].astype(int))
        .groupby(["donor", "arm"])[["n", "cyc", "unl"]].sum().reset_index())

@@ -420,7 +420,8 @@ def pass_t(args, genes_all, gi, rng, min_cells=None):
         don_tbl = TC.skin_donor_table()
         donor = obs["donor"].astype(str)
         is_hc = donor.map(don_tbl["is_hc"]).fillna(False).to_numpy()
-        is_cd4 = obs["cell_type_T"].astype(str).eq("CD4").to_numpy()
+        import lineage as LIN
+        is_cd4 = obs["cell_type_T"].astype(str).isin(LIN.CD4_ANY).to_numpy()
         lvl[is_cd4 & is_hc] = HC
         arm = lvl.to_numpy()
 

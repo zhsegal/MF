@@ -26,6 +26,15 @@ subset (590 of 1,043 LR genes; CXADR and IL22RA1 absent), and neither compartmen
 non-T partner cells. joint_annotated is the only full-gene source for both.
 
 Nothing under data/ is written. All output goes to reports/ccc52_mvb/.
+
+ANNOTATION PINNING. This script is pinned to the **v1 lineage call** (`cell_type_final == "CD4"`)
+and is NOT updated to `nonmal_T_labels_v1`. That call is an else-branch: its CD4 arm is roughly
+20% CD8 and 20% Treg in skin (`reports/ccc52_mvb/qc_benign_arm/`). The results already in
+`reports/ccc52_mvb/` were produced with it and are labelled as such in `KNOWLEDGE/RESULTS.md`.
+Re-running this script reproduces those numbers; it does NOT produce current ones. To redo the
+contrast on the clean arm, rebuild `stage_prep` around `helpers/lineage.py`
+(`LIN.CD4_BENIGN[tissue]` replaces the blood Treg/naive cluster clean-up, which the
+re-annotation subsumes) -- tracked as a pending analysis in `KNOWLEDGE/ANALYSES.md`.
 """
 from __future__ import annotations
 

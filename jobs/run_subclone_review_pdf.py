@@ -63,7 +63,10 @@ obs["mal_cluster"] = mc["mal_cluster"].reindex(obs.index).to_numpy()
 obs["mal_prob"] = mc["mal_cluster_prob"].reindex(obs.index).to_numpy(dtype=float)
 m5 = _idx(pd.read_parquet(AJ / "skin_T_malignancy_v5.parquet"), "obs_name")
 obs["cnv_score"] = m5["cnv_score"].reindex(obs.index).to_numpy(dtype=float)
-benign = (obs["mal_cluster"].astype(str) == "False").to_numpy() & (obs["cell_type_T"] == "CD4").to_numpy()
+import lineage as LIN
+obs = LIN.apply_lineage(obs, "skin")          # obs comes straight from the h5ad, not read_obs
+benign = ((obs["mal_cluster"].astype(str) == "False").to_numpy()
+          & obs["cell_type_T"].astype(str).isin(LIN.CD4_BENIGN["skin"]).to_numpy())
 
 arm_raw = pd.read_parquet(AJ / "skin_T_arm_cnv_v5.parquet")
 if "obs_name" in arm_raw.columns:

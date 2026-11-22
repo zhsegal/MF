@@ -104,7 +104,9 @@ def main():
         donor = obs["donor"].astype(str)
         if don is not None:
             is_hc = donor.map(don["is_hc"]).fillna(False).to_numpy()
-            lvl[(obs["cell_type_T"].astype(str) == "CD4") & is_hc] = "CD4_HC"
+            import lineage as LIN
+            is_cd4 = obs["cell_type_T"].astype(str).isin(LIN.CD4_ANY).to_numpy()
+            lvl[is_cd4 & is_hc] = "CD4_HC"
 
         # ---- genes: every ADT-mapped symbol, the trafficking modules, the loss markers
         want = sorted({*ST.ADT_TO_GENE.values(), *ST.TRAFFIC_GENES, *ST.LOSS_MARKERS,

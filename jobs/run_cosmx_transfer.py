@@ -48,7 +48,8 @@ MODEL_JSON = CS.S1_DIR / "processed" / "malig_transfer_model.json"
 CV_CSV = NB_DIR / "tables" / "deg28e_malig_transfer_cv.csv"
 COEF_CSV = NB_DIR / "tables" / "deg28e_malig_transfer_coef.csv"
 CALLED = {"tcr", "auto", "user"}          # call_source values that carry a real call
-CD4_TYPES = {"CD4", "CD4_Treg"}
+# post-re-annotation vocabulary; "CD4" is the malignant cells, which keep the old label
+CD4_TYPES = {"CD4", "CD4_conv", "CD4_naive", "CD4_Treg"}
 MIN_T_DET, MIN_REL = 0.05, 0.5
 AUC_GATE = 0.75
 SEED = 0
