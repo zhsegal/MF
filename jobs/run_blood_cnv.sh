@@ -32,8 +32,19 @@ chmod +x "$INNER"
 DEPEND_ARGS=()
 [[ -n "${DEPEND:-}" ]] && DEPEND_ARGS=(-w "$DEPEND")
 
+# Auto-requeue on preemption. The `risk` queue is PREEMPTABLE with TERMINATE_WHEN=PREEMPT, so a
+# preempted job is KILLED with exit 130 rather than suspended. This job is resumable -- the
+# full-gene object is cached and the arm pass checkpoints per donor into <ARM_CACHE>_parts/ --
+# so requeueing on 130 turns preemption into a pause instead of a loss.
+#   REQUEUE_EXIT="130"   requeue on preemption (default on the risk queue)
+#   REQUEUE_EXIT=""      never requeue
+REQUEUE_EXIT="${REQUEUE_EXIT-$([[ "$QUEUE" == risk* ]] && echo 130 || echo "")}"
+REQUEUE_ARGS=()
+[[ -n "$REQUEUE_EXIT" ]] && REQUEUE_ARGS=(-Q "$REQUEUE_EXIT")
+
 bsub \
     "${DEPEND_ARGS[@]}" \
+    "${REQUEUE_ARGS[@]}" \
     -q "$QUEUE" \
     -n "$NSLOTS" \
     -R "span[hosts=1] rusage[mem=${MEM_MB}]" \
@@ -41,5 +52,5 @@ bsub \
     -J blood_cnv \
     -o "$LOG" -e "$LOG" \
     "$INNER"
-echo "submitted blood_cnv -> $QUEUE  (-n $NSLOTS, span[hosts=1], ${MEM_MB}MB/slot)"
+echo "submitted blood_cnv -> $QUEUE  (-n $NSLOTS, span[hosts=1], ${MEM_MB}MB/slot${REQUEUE_EXIT:+, requeue on exit $REQUEUE_EXIT})"
 echo "log: $LOG"

@@ -413,7 +413,9 @@ def assert_roster(adata, sidecar_path=None, pooled_key=None, sub_key=None) -> pd
     pooled_key = cfg._v1.GROUPBY if pooled_key is None else pooled_key
     sub_key = cfg.GROUPBY if sub_key is None else sub_key
     assert Path(sidecar_path).exists(), (
-        f"missing {sidecar_path} -- run 10c_skin_myeloid_fibro_reannotation.ipynb (section 9)")
+        f"missing {sidecar_path} -- run notebooks/20_skin/22_myeloid_fibro_reannotation.ipynb "
+        f"(section 9). The v1 sidecar was parked in data/atlas_joint/_v1_myefib/ on "
+        f"2026-09-17: it covered only 48% of the v2 skin myeloid/fibroblast pool.")
 
     side = pd.read_csv(sidecar_path, dtype=str)
     got_m = sorted(set(side.loc[side.lineage == "Myeloid", "subtype_ccc"].dropna()))

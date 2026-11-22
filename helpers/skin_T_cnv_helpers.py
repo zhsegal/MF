@@ -315,12 +315,24 @@ def build_fullgene_blood_cnv_object(joint_h5: Path, annotated_h5: Path, cache: P
     Writes `cache` with raw counts in both `X` and `layers['raw_counts']` (what
     `prepare_blood_pooled_cnv_inputs` expects) and returns it.
     """
+    import h5py
+
     if cache.exists() and not force:
+        # The cache is keyed by filename alone, so a cohort rebuild (v1 -> v2) would otherwise be
+        # loaded back silently and the whole CNV run would be a v1 run wearing v2 filenames. That
+        # is the exact failure 11_atlas_v2_qc exists to catch; check the cells, not the name.
+        with h5py.File(annotated_h5, "r") as f:
+            want_n = len(f["obs"][f["obs"].attrs.get("_index", "cell_id")])
+        with h5py.File(cache, "r") as f:
+            have_n = len(f["obs"][f["obs"].attrs.get("_index", "cell_id")])
+        if have_n != want_n:
+            raise ValueError(
+                f"{cache.name} holds {have_n:,} cells but {annotated_h5.name} has {want_n:,}. "
+                "This cache was built from a different cohort. Delete it, bump the filename, or "
+                "pass force=True -- do not reuse it.")
         out = sc.read_h5ad(cache)
         print(f"loaded cached full-gene CNV object ({cache.name}): {out.shape}")
         return out
-
-    import h5py
 
     assert joint_h5.exists(), f"missing {joint_h5}"
     assert annotated_h5.exists(), f"missing {annotated_h5}"

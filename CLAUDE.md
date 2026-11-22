@@ -30,16 +30,19 @@ Malignancy call revisions are versioned in the filename (`skin_T_malignancy_v5.p
 ## Compute
 
 - Kernel `neural_nmf_env`. **Never run heavy jobs on the login node** — training,
-  `get_normalized_expression`, inferCNV, full-notebook execution, large fits. They go to
-  `jobs/*.sh` (bsub) or to the user's GPU kernel. Big/expensive Bash (recursive `find`/`rg` over
-  the tree, reads of the 112 GB atlas) can crash the login node too — keep commands scoped.
+  `get_normalized_expression`, inferCNV, full-notebook execution, large fits. Claude submits them
+  via `jobs/*.sh` (bsub) and watches them to completion (root CLAUDE.md "Compute"). Notebooks:
+  `QUEUE=… NCPU=… MEM_MB=… WALL_H=… jobs/run_notebook.sh <nb>` (executes in place, log
+  `jobs/run_notebook_<name>.bsub.log`). Big/expensive Bash (recursive `find`/`rg` over the tree,
+  reads of the 112 GB atlas) can crash the login node too — keep commands scoped.
 - `data/` is ~815 GB (375 GB `atlas_joint`, 251 GB `_archive_v1`, the rest raw cohorts) on a
   volume that runs near capacity. Check `df` before writing anything large.
 
 ## Notebooks
 
 - Edit `.ipynb` with the `NotebookEdit` tool. Never use the Jupyter MCP.
-- Don't execute notebooks — make the edit and hand the run back.
+- Never execute notebooks on the login node. After an edit, submit with `jobs/run_notebook.sh`,
+  watch the job, fix failures, and tell the user only once it has finished completely.
 - Outputs: prefer `.shape`/`.head()`; print `adata`, not `.to_df()`.
 - `polars` > `pandas` for big frames; `pathlib` > `os.path`.
 - Artifact filenames encode the notebook that wrote them using **pre-reorg** numbers

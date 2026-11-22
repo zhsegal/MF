@@ -202,6 +202,7 @@ Li per-cell result: `li2024_tcr_malignancy.parquet`, 419,579 rows, `has_tcr` = 1
 | ResolVI | setup dry-check only (`03_spatial_visium_download`). `visium/resolvi_model/` + `ctcl_visium_resolvi.h5ad` exist on disk but **no notebook in the tree trains or reads them** — dead artifacts |
 | Gap | **No published per-donor spatial↔scRNA crosswalk.** Only aggregate counts (23 = 8 CTCL + 15 healthy from 15 donors). Visium libraries have no VDJ and were never crosswalked to atlas donors. Section metadata (disease/sex/age) from SDRF only |
 | Caveat | 55 µm spots are multi-cell; DestVI/resolVI assume single-cell resolution → partial fit, logged |
+| Status | **Retired 2026-09-16.** The spatial arm was dropped: the Visium slides went unused and nothing downstream read the deconvolution. `10_atlas/15_spatial_resolvi_deconvolution` was deleted (commit `8f660e4` holds it), the ingest moved to `notebooks/old/03_spatial_visium_download.ipynb`, and `data/Li2024_atlas/visium/` (27 GB: tarballs, spaceranger `sections/`, `ctcl_visium*.h5ad`, the CondSCVI/DestVI/resolVI models) plus `figures/destvi_*`, `figures/visium_qc_*` were deleted from disk. Restarting means re-downloading both accessions. The rows above record what the run produced while it existed |
 
 Also in the Li paper but **not used**: RareCyte immunofluorescence (protein imaging, no transcriptome).
 

@@ -4,6 +4,11 @@ Where spatial data lives across the atlas and the catalogued MF/SS studies, what
 usable, and how to fetch it. Written to open the spatial arm of the project (companion to
 `00_preprocess/03_spatial_visium_download.ipynb`).
 
+> **Retired 2026-09-16.** The spatial arm was dropped — the Visium slides went unused. The
+> deconvolution notebook is deleted (in commit `8f660e4`), the ingest notebook is in
+> `notebooks/old/`, and everything under `data/Li2024_atlas/visium/` was removed from disk.
+> This map is kept as the fetch recipe if the arm is ever reopened.
+
 ## TL;DR
 
 **Only the Li 2024 Visium (10x, 23 skin sections) is genuine spot-level spatial

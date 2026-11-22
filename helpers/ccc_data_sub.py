@@ -38,8 +38,10 @@ from ccc_data import *  # noqa: F401,F403 -- paths, LR_PANEL, LR_CAVEATS, run pa
 import ccc_data as _v1
 
 # ---------------------------------------------------------------- inputs
-# nb10c: cell_id, lineage, leiden_sub, subtype_fine, subtype_ccc -- one row per myeloid or
-# fibroblast skin cell (93,435 + 66,760 = 160,195).
+# nb22: cell_id, lineage, leiden_sub, subtype_fine, subtype_coarse -- one row per myeloid or
+# fibroblast skin cell (144,009 + 184,452 = 328,461). The v1 contract this comment used to
+# describe (subtype_ccc, 93,435 + 66,760 = 160,195) is the parked one under _v1_myefib/; the
+# v2 sidecar replaced it AT THE SAME PATH, so only the row count tells you which you have.
 SUBTYPE_CSV = ATLAS_JOINT / "skin_myeloid_fibro_subtypes.csv"  # noqa: F405
 SUBTYPE_PROV = ATLAS_JOINT / "skin_myeloid_fibro_provenance.json"  # noqa: F405
 
@@ -72,13 +74,14 @@ def fig(name: str, ext: str = "png"):
 #
 # The values below are the expected landing zone of the nb10c collapse (fine states that clear
 # MIN_CELLS in fewer than MIN_SAMPLES donors get merged into their parent there: cDC1 + cDC2 ->
-# cDC, Mono + moDC -> Mono_moDC, Mac_ISG -> Mac_infl, F_myofibroblast -> F_mesenchymal).
+# cDC, Mono_CD14 + Mono_CD16 + moDC -> Mono_moDC, Mac_ISG -> Mac_infl,
+# F_myofibroblast -> F_mesenchymal).
 MYELOID_LEVELS = [
     "LC",                # Langerhans: CD207/CD1A/EPCAM
     "cDC",               # cDC1 + cDC2
     "DC_LAMP3",          # LAMP3/CCR7/FSCN1 migratory (mreg) DC
     "pDC",               # LILRA4/IL3RA/TCF4
-    "Mono_moDC",         # S100A8/9/FCN1/VCAN + CD14 moDC
+    "Mono_moDC",         # Mono_CD14 + Mono_CD16 + CD14 moDC
     "Mac_FOLR2",         # resident macrophage, the M2-like pole
     "Mac_SPP1_TREM2",    # TAM / lipid-associated macrophage
     "Mac_infl",          # IL1B/CXCL9-11, the M1-like pole (+ Mac_ISG)
@@ -134,9 +137,10 @@ CELL_DEFINITIONS = {
     ),
     "pDC": "Plasmacytoid DC (LILRA4/IL3RA/TCF4). Rare; expect report-only.",
     "Mono_moDC": (
-        "Classical monocytes (S100A8/9, FCN1, VCAN) and monocyte-derived DC (CD14 + CD1C/CD209) "
-        "pooled -- the boundary between them is a gradient in tissue and does not survive the "
-        "donor gate as two levels."
+        "Classical monocytes (Mono_CD14: S100A8/9, FCN1, VCAN), non-classical monocytes "
+        "(Mono_CD16: FCGR3A, 442 cells over 73 donors) and monocyte-derived DC (CD14 + "
+        "CD1C/CD209) pooled -- the boundaries between them are gradients in tissue and none "
+        "survives the donor gate as its own level here. nb22's subtype_fine keeps the split."
     ),
     "Mac_FOLR2": (
         "Resident macrophages: FOLR2, LYVE1, SELENOP, C1QA-C, MRC1, CD163, F13A1. The M2-like "

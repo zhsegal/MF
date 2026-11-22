@@ -1,25 +1,25 @@
 #!/usr/bin/env python
-"""Build the MF/CTCL skin degradome object for nb42.
+"""Build the MF/CTCL skin degradome object for nb28 (atlas v2, MF + HC skin).
 
-Streams data/atlas_joint/joint_annotated.h5ad (48 GB, 1,173,694 x 40,821 raw counts) one
-row-chunk at a time, keeps the 720,125 skin cells that carry a degradome level, and writes:
+Streams data/atlas_joint/joint_annotated.h5ad (112 GB, 2,157,693 x 42,347 raw counts) one
+row-chunk at a time, keeps the ~945k MF+HC skin cells that carry a degradome level, and writes:
 
-  data/degradome/skin_degradome.h5ad                     720,125 x 156 panel genes
-  data/degradome/skin_degradome_pseudobulk_full.parquet  (level x sample) x 40,821 counts
+  data/degradome/skin_degradome.h5ad                     ~945,000 x ~290 panel genes
+  data/degradome/skin_degradome_pseudobulk_full.parquet  (level x sample) x 42,347 counts
   data/degradome/skin_degradome_pseudobulk_meta.parquet  design metadata per pseudo-sample
   data/degradome/degradome_equivalence_testset.h5ad      3 donors at FULL gene width
   data/degradome/degradome_build_manifest.json
 
-Why a job and not a notebook cell: the panel needs ADAM10 and ADAM17, which are in nb31's
-protease panel and are NOT in joint_mrvi_input_skin.h5ad's 10k HVGs (both are ubiquitous, so
-they are never highly variable). Comparing against nb31 while silently dropping two of its
-twelve genes is not acceptable, so the object is rebuilt from the full-gene source.
+Why a job and not a notebook cell: the panel needs ADAM10 and ADAM17 (ubiquitous, so never
+highly variable) and much of the collagen and motility set, none of which survive
+joint_mrvi_input_skin.h5ad's 10k HVGs. Silently dropping part of the
+panel is not acceptable, so the object is rebuilt from the full-gene source.
 
 Correctness note the whole notebook rests on: the library-size factor is summed over all
-40,821 genes and only THEN are the columns subset to the panel. Normalising after subsetting
-would rescale every cell by (panel counts / total counts) -- roughly 40x here, and varying by
+42,347 genes and only THEN are the columns subset to the panel. Normalising after subsetting
+would rescale every cell by (panel counts / total counts) -- roughly 145x here, and varying by
 cell type, which is precisely the axis nb42 measures. The equivalence test set exists to gate
-exactly this; nb42 section 0 asserts it before anything else runs.
+exactly this; nb28 §0 asserts it before anything else runs.
 
 Pure I/O, no GPU. Runs in mrvi_env (ccc_helpers imports liana; neural_nmf_env has no liana).
 """
@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 
 NB_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(NB_DIR))
+sys.path.insert(0, str(NB_DIR / "helpers"))
 
 import degradome_data as cfg      # noqa: E402
 import degradome_helpers as D     # noqa: E402
@@ -47,6 +47,9 @@ def parse_args():
 def preflight():
     miss = [str(p) for p in (cfg.SOURCE_H5AD, cfg.OBS_PARQUET, cfg.SUBTYPE_CSV)
             if not p.exists()]
+    if not cfg.UNASSIGNED_CSV.exists():
+        print(f"note: {cfg.UNASSIGNED_CSV.name} absent -- building without the nb22b residual "
+              f"levels (NK / ILC / the wider neutrophil pool).")
     if miss:
         sys.exit("missing inputs:\n  " + "\n  ".join(miss))
 
