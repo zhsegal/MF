@@ -41,8 +41,27 @@ non-malignant T/NK cells from a scVI embedding the malignant cells never entered
 `helpers/lineage.py` — never a literal. The new benign arm drops the per-cell CD8A/B+ fraction
 from 0.199 → 0.089 (skin) and 0.141 → 0.036 (blood).
 
-**Still broken.** Every result produced before 2026-11-22 used the old arm. See `RESULTS.md` for
-which. `mal_cluster` itself was derived from the old labels and is deliberately **not** rebuilt —
+**What it changed, measured.** The CCC contrast has now been run on both arms, so the damage is
+quantified gene by gene in `reports/ccc52_mvb_v2/annotation_shift.csv`. In **skin** the cytotoxic
+and Treg effects deflate — KLRD1 −6.02 → −2.41, TRDC −5.71 → −2.41, NKG7 −3.77 → −0.87, CD8A
+−4.74 → −3.47, FOXP3 −3.94 → −2.55 — while TOX is unmoved (1.16 → 1.15) and CD70 strengthens
+(1.20 → 1.96). 23 skin genes shift by ≥ 1.5 and 79 more by 0.5–1.5; 287 are stable.
+In **blood** the same genes move the *other* way (NKG7 −3.55 → −6.52, KLRD1 −3.45 → −5.17),
+because the v1 blood arm was flat `CD4` with naive/Treg clusters stripped by a marker rule while
+v2 is `CD4_conv` proper, whose benign cells carry more NKG7/CCL5. Blood FOXP3 does collapse
+(−1.72 → −0.12). Either direction is the benign arm moving, never the clone.
+
+**The new arm has its own circularity.** The re-annotation routes cells using a 28-gene marker
+panel, so those genes separate the arms by construction. `label_defining_gene == True` in every
+v2 table flags them (CD4, CD40LG, IL7R, S100A4, CCR7, SELL, TCF7, LEF1, FOXP3, IL2RA, IKZF2,
+CTLA4, CD8A, CD8B, GZMK, NKG7, KLRF1, NCAM1, TYROBP, FCGR3A, KIT, TRDC, TRGC1, TRGC2, SLC4A10,
+KLRB1, CD3D, CD3E). Skin `CD4` and `CD40LG` are "significant" under v2 for exactly this reason.
+v1 was not free of it either — nb21/nb31 read the same markers off dot plots — but v2 makes the
+rule explicit, so the affected genes can be named.
+
+**Still broken.** Every other result produced before 2026-11-22 still uses the old arm — the
+target screens, the payload screen, the degradome tables. See `RESULTS.md` for which.
+`mal_cluster` itself was derived from the old labels and is deliberately **not** rebuilt —
 see `DECISIONS.md#mal_cluster-is-frozen`.
 
 ---
@@ -160,7 +179,9 @@ recoverable from the atlas objects.
 numbers on a v2 input. Before quoting anything, confirm the input is a v2 object
 (`atlas_obs_full_v2.parquet`, `joint_*`, `skin_T_annotated.h5ad`, `blood_T_annotated.h5ad`), and
 note that **`_v2`/`_v3` suffixes are not reliable recency markers** — `skin_T_annotated_v2.h5ad`
-was older than the unsuffixed file. The v1 freeze is `data/_archive_v1/`, which is read-only.
+was older than the unsuffixed file. The v1 freeze (data/_archive_v1/) has been **deleted**, so
+there is nothing to compare a suffixed file against: resolve a version question from
+`docs/archive/ATLAS_V1_PARAMETERS.md` and `KNOWLEDGE/HISTORY.md`, never by reading a v1 object.
 
 Malignancy call revisions are versioned in the filename (`skin_T_malignancy_v5.parquet`,
 `blood_T_malignancy_v4.parquet`); check which revision a result pinned before comparing.

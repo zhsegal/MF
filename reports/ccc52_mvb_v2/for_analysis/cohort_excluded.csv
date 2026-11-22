@@ -1,0 +1,38 @@
+tissue2,unit,drop_reason,n_cells
+blood,pittsburgh:MF26,ex vivo culture cohort (geskin2026),21401
+blood,pittsburgh:PF46,ex vivo culture cohort (geskin2026),26264
+blood,pittsburgh:PF47,ex vivo culture cohort (geskin2026),22480
+blood,pittsburgh:PF48,ex vivo culture cohort (geskin2026),40314
+blood,pittsburgh:PF49,ex vivo culture cohort (geskin2026),23419
+blood,pittsburgh:PF50,ex vivo culture cohort (geskin2026),27605
+blood,pittsburgh:SZ30,ex vivo culture cohort (geskin2026),13988
+blood,pittsburgh:SZ33,ex vivo culture cohort (geskin2026),13503
+blood,pittsburgh:SZ38,ex vivo culture cohort (geskin2026),26598
+blood,pittsburgh:SZ39,ex vivo culture cohort (geskin2026),19177
+blood,pittsburgh:SZ5,ex vivo culture cohort (geskin2026),25706
+skin,mda:MF14,malignant clone is not CD4,5314
+skin,pittsburgh:SC205,malignant clone is not CD4,3094
+skin,pittsburgh:SC82,malignant clone is not CD4,8388
+skin,vienna:GSM9038965,diagnosis outside MF/SS,7813
+skin,vienna:MF318,malignant clone is not CD4,35028
+skin,vienna:P101,diagnosis outside MF/SS,11894
+skin,vienna:P102,diagnosis outside MF/SS,9306
+skin,vienna:P107,malignant clone is not CD4,11072
+skin,vienna:P118,diagnosis outside MF/SS,3506
+skin,vienna:P127,malignant clone is not CD4,7462
+skin,vienna:P143,diagnosis outside MF/SS,14554
+skin,vienna:P144,diagnosis outside MF/SS,13447
+skin,vienna:P149,diagnosis outside MF/SS,6276
+skin,vienna:P193,diagnosis outside MF/SS,20637
+skin,vienna:P194,diagnosis outside MF/SS,9659
+skin,vienna:P195,malignant clone is not CD4,24765
+skin,vienna:P202,malignant clone is not CD4,17310
+skin,vienna:P213,diagnosis outside MF/SS,10611
+skin,vienna:P217,diagnosis outside MF/SS,6948
+skin,vienna:P230,malignant clone is not CD4,1504
+skin,vienna:P71,malignant clone is not CD4,7429
+skin,vienna:P78,diagnosis outside MF/SS,2596
+skin,vienna:P79,diagnosis outside MF/SS,5848
+skin,vienna:P88,diagnosis outside MF/SS,3452
+skin,vienna:P95,malignant clone is not CD4,15208
+skin,vienna:PEN,diagnosis outside MF/SS,14427

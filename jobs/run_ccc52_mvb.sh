@@ -2,11 +2,17 @@
 # Submit one stage of the malignant-vs-benign CD4 differential-CCC analysis (nb52).
 #
 #   ./run_ccc52_mvb.sh lr                    # mrvi_env: rebuild the 1,422-interaction resource
-#   ./run_ccc52_mvb.sh prep                  # cohort, arms, blood benign sub-clustering, row labels
+#   ./run_ccc52_mvb.sh prep                  # cohort, arms, partner types, row labels
 #   ./run_ccc52_mvb.sh pass                  # one streamed pass over joint_annotated.h5ad
 #   ./run_ccc52_mvb.sh fit                   # DESeq2, partner gate, tables, report, bundle
-#   ./run_ccc52_mvb.sh bundle                # re-assemble reports/ccc52_mvb/for_analysis/ only
+#   ./run_ccc52_mvb.sh bundle                # re-assemble for_analysis/ only
 #   AFTER=<jobid> ./run_ccc52_mvb.sh prep    # chain
+#
+# Everything after the stage is passed to the Python job. The one that matters:
+#   --annot v2   (DEFAULT) benign arm = helpers/lineage.py  -> reports/ccc52_mvb_v2/
+#   --annot v1   frozen cell_type_final == "CD4" arm        -> reports/ccc52_mvb/
+# Only `prep` reads it; `pass` and `fit` must be given the SAME value so they find the right
+# output tree.  e.g.  AFTER=<id> ./run_ccc52_mvb.sh fit --annot v2
 #
 # Knobs: QUEUE, NCPU, MEM_MB (per slot), WALL_H, AFTER.
 set -euo pipefail

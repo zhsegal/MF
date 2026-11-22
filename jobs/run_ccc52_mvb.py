@@ -15,7 +15,7 @@ Stages (one per bsub, chained with AFTER=<jobid> ./run_ccc52_mvb.sh <stage>):
   lr    mrvi_env.  Rebuild the filtered LR resource: LIANA `consensus` intersected with
         support >= 6 of the 15 human resources -> 1,422 interactions / 1,043 genes. The repo has
         no such file on disk; `helpers/ccc_panel.py:12` is the only trace of the spec.
-  prep  Cohort, arms, the blood benign-arm cleanup, partner types, and the row-label vectors
+  prep  Cohort, arms (see --annot below), partner types, and the row-label vectors
         that the streaming pass consumes.
   pass  ONE streamed pass over data/atlas_joint/joint_annotated.h5ad (112 GB, layers/raw_counts)
         that accumulates every count sum and detection count this analysis needs.
@@ -27,14 +27,21 @@ non-T partner cells. joint_annotated is the only full-gene source for both.
 
 Nothing under data/ is written. All output goes to reports/ccc52_mvb/.
 
-ANNOTATION PINNING. This script is pinned to the **v1 lineage call** (`cell_type_final == "CD4"`)
-and is NOT updated to `nonmal_T_labels_v1`. That call is an else-branch: its CD4 arm is roughly
-45.8% conventional CD4 in skin (`reports/lineage_check/`). The results already in
-`reports/ccc52_mvb/` were produced with it and are labelled as such in `KNOWLEDGE/RESULTS.md`.
-Re-running this script reproduces those numbers; it does NOT produce current ones. To redo the
-contrast on the clean arm, rebuild `stage_prep` around `helpers/lineage.py`
-(`LIN.CD4_BENIGN[tissue]` replaces the blood Treg/naive cluster clean-up, which the
-re-annotation subsumes) -- tracked as a pending analysis in `KNOWLEDGE/ANALYSES.md`.
+WHICH ANNOTATION (`--annot`, default v2). Only `stage_prep` differs; `pass` and `fit` are
+annotation-agnostic and read whatever `prep` wrote.
+
+  v2  (default, current)  The benign arm is `helpers/lineage.py` -- `CD4_conv + CD4_naive` in
+      skin, `CD4_conv` in blood, from `data/atlas_joint/nonmal_T_labels_v1.parquet`, a scVI
+      re-annotation the malignant cells never entered. The hand-built blood Treg/naive cluster
+      clean-up is deleted, because the re-annotation subsumes it, and partner types are taken
+      from the new labels too, so both tissues now offer real `CD4_Treg`, `CD4_naive`, `CD8`,
+      `NK_ILC`, `gdT` and `MAIT` partners. Output -> reports/ccc52_mvb_v2/.
+  v1  (frozen, reproduces the published numbers)  The benign arm is `cell_type_final == "CD4"`,
+      an else-branch that is only ~45.8% conventional CD4 in skin, plus the blood cluster
+      clean-up. Kept so the existing report stays regenerable. Output -> reports/ccc52_mvb/.
+
+Do not compare a v1 number to a v2 number for any gene that separates CD4 from CD8/NK/Treg --
+CD8A, CD8B, KLRD1, TRDC, GZMK/NKG7, FOXP3. That is the whole point of the re-annotation.
 """
 from __future__ import annotations
 
@@ -51,7 +58,15 @@ NB_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(NB_DIR / "helpers"))
 
 ATLAS = NB_DIR / "data" / "atlas_joint"
-OUT = NB_DIR / "reports" / "ccc52_mvb"
+
+# one output tree per annotation, so a v2 run can never overwrite the frozen v1 report
+OUT_BY_ANNOT = {"v1": NB_DIR / "reports" / "ccc52_mvb",
+                "v2": NB_DIR / "reports" / "ccc52_mvb_v2"}
+# the LIANA resource does not depend on the lineage call, so it is built once and shared
+LR_DIR = OUT_BY_ANNOT["v1"]
+LR_FILES = ("lr_resource_1422.csv", "lr_resource_consensus_full.csv", "lr_genes.json")
+ANNOT = "v2"
+OUT = OUT_BY_ANNOT[ANNOT]
 
 CONFIG = dict(
     # ---- sources -----------------------------------------------------------------
@@ -102,6 +117,22 @@ CONFIG = dict(
     CHUNK=20000,                 # rows per streamed chunk
 )
 
+# Every gene that `jobs/run_nonmal_T_reannot.py` uses in a gate or a score to decide what a
+# non-malignant T/NK cell IS (LINEAGE + COMPOSITE in that file). The v2 benign arm is selected
+# on these, so their malignant-vs-benign contrast is partly circular: a cell high in CD8B was
+# routed out of the benign arm BECAUSE it was high in CD8B. They are still fitted and reported,
+# because dropping them would hide the arm's own composition, but they are flagged everywhere.
+# v1 had a weaker form of the same problem -- nb21/nb31 read the same markers off dot plots.
+LABEL_MARKERS = frozenset({
+    "CD3D", "CD3E", "CD4", "CD40LG", "IL7R", "S100A4",          # CD4_conv
+    "CCR7", "SELL", "TCF7", "LEF1",                             # CD4_naive
+    "FOXP3", "IL2RA", "IKZF2", "CTLA4",                         # CD4_Treg
+    "CD8A", "CD8B", "GZMK", "NKG7",                             # CD8
+    "KLRF1", "NCAM1", "TYROBP", "FCGR3A", "KIT",                # NK_ILC
+    "TRDC", "TRGC1", "TRGC2",                                   # gdT
+    "SLC4A10", "KLRB1",                                         # MAIT
+})
+
 PRIOR_AXES = [
     # (CD4-side gene, [cognate genes named in the brief], note)
     ("CSF2",    [],                     "GM-CSF, myeloid recruitment"),
@@ -138,7 +169,7 @@ def stage_lr(args):
     import liana as li
     from collections import Counter
 
-    OUT.mkdir(parents=True, exist_ok=True)
+    LR_DIR.mkdir(parents=True, exist_ok=True)
     human = [r for r in li.rs.show_resources() if r not in ("consensus", "mouseconsensus")]
     log(f"{len(human)} human resources: {human}")
     assert len(human) == 15, f"expected 15 human resources, got {len(human)}"
@@ -152,7 +183,7 @@ def stage_lr(args):
     con = li.rs.select_resource("consensus")[["ligand", "receptor"]].drop_duplicates()
     con = con.reset_index(drop=True)
     con["support"] = [cnt.get((l, r), 0) for l, r in con.itertuples(index=False)]
-    con.to_csv(OUT / "lr_resource_consensus_full.csv", index=False)
+    con.to_csv(LR_DIR / "lr_resource_consensus_full.csv", index=False)
     log(f"unfiltered consensus: {len(con):,} interactions")
 
     keep = con[con["support"] >= CONFIG["LR_SUPPORT"]].reset_index(drop=True)
@@ -162,9 +193,9 @@ def stage_lr(args):
     assert len(keep) == 1422, f"resource size changed: {len(keep)} != 1422 (liana version drift?)"
     assert len(genes) == 1043, f"resource gene count changed: {len(genes)} != 1043"
 
-    keep.to_csv(OUT / "lr_resource_1422.csv", index=False)
-    (OUT / "lr_genes.json").write_text(json.dumps(genes))
-    log(f"wrote {OUT/'lr_resource_1422.csv'}")
+    keep.to_csv(LR_DIR / "lr_resource_1422.csv", index=False)
+    (LR_DIR / "lr_genes.json").write_text(json.dumps(genes))
+    log(f"wrote {LR_DIR/'lr_resource_1422.csv'}")
 
 
 # ======================================================================================
@@ -275,6 +306,67 @@ def _clean_blood_benign(obs_cd4):
     return sets
 
 
+def _apply_lineage(obs):
+    """v2: overlay the re-annotated lineage onto a copy of `cell_type_final`.
+
+    `helpers/lineage.apply_lineage` works on one compartment at a time and targets
+    `cell_type_T`; this frame is both compartments keyed by `cell_id` on `cell_type_final`, so
+    the overlay is done here against the same table, with the same non-destructive contract --
+    the old call stays in `cell_type_final`, the new one lands in `cell_type_lin`, and
+    `lineage_source` says which is which for every row.
+    """
+    import lineage as LIN
+
+    lab = LIN.load_labels()
+    ct = obs["cell_type_final"].astype(str).copy()
+    src = pd.Series(LIN.OLD_SOURCE, index=obs.index, dtype="object")
+    hit = obs.index.intersection(lab.index)
+    ct.loc[hit] = lab.loc[hit, "label_new"].to_numpy()
+    src.loc[hit] = LIN.LABELS_VERSION
+    obs["cell_type_lin"] = ct
+    obs["lineage_source"] = src
+
+    relabelled = src.eq(LIN.LABELS_VERSION)
+    for t, n in LIN.EXPECTED_CELLS.items():
+        got = int((relabelled & obs["tissue2"].eq(t)).sum())
+        assert got == n, f"{t}: {got:,} cells carry a new label, expected {n:,}"
+    # the parquet is non-malignant by construction; if that ever stopped being true the M arm
+    # would start losing cells silently, because the new vocabulary has no "CD4"
+    n_mal = int((relabelled & obs["mal"].eq(True)).sum())
+    assert n_mal == 0, f"{n_mal:,} malignant cells were relabelled; the M arm would shrink"
+
+    moved = (obs.loc[relabelled & obs["cell_type_final"].eq(CONFIG["CD4_LABEL"]), "cell_type_lin"]
+             .value_counts())
+    log(f"lineage overlay: {int(relabelled.sum()):,} cells relabelled; "
+        f"old-CD4 cells now: {moved.to_dict()}")
+    return obs
+
+
+def _arm_composition(obs):
+    """What the re-annotation did to the arms: old label x new label x malignancy, per tissue."""
+    sub = obs[obs["cohort_keep"] & obs["mal"].notna() & obs["tissue2"].notna()].copy()
+    sub["label_v1"] = sub["cell_type_final"].astype(str)
+    sub["label_v2"] = sub["cell_type_lin"].astype(str)
+    sub["malignant"] = sub["mal"].astype(bool)
+    sub["arm_"] = sub["arm"].fillna("-").astype(str)
+    keys = ["tissue2", "label_v1", "label_v2", "malignant", "lineage_source"]
+    comp = (sub.groupby(keys + ["arm_"], dropna=False).size()
+            .unstack("arm_", fill_value=0).reset_index())
+    for c in ("M", "B", "-"):
+        if c not in comp.columns:
+            comp[c] = 0
+    comp = comp.rename(columns={"tissue2": "tissue", "M": "n_arm_M", "B": "n_arm_B",
+                                "-": "n_no_arm"})
+    comp["n_cells"] = comp[["n_arm_M", "n_arm_B", "n_no_arm"]].sum(axis=1)
+    comp = comp[["tissue", "label_v1", "label_v2", "malignant", "lineage_source",
+                 "n_cells", "n_arm_M", "n_arm_B", "n_no_arm"]]
+    comp = comp.sort_values(["tissue", "n_cells"], ascending=[True, False])
+    comp.to_csv(OUT / "arm_composition.csv", index=False)
+    log(f"arm_composition.csv: {len(comp)} rows; benign arm "
+        + str(comp.groupby("tissue")["n_arm_B"].sum().to_dict()))
+    return comp
+
+
 def stage_prep(args):
     import polars as pl
 
@@ -300,11 +392,31 @@ def stage_prep(args):
                    .fillna(obs["patient_key"]).fillna(obs["donor"]))
 
     # ---- arms ----------------------------------------------------------------------
-    is_cd4 = obs["cell_type_final"].eq(CONFIG["CD4_LABEL"]) & obs["tissue2"].notna()
+    # The M arm is the same in both annotations: malignant cells are absent from the
+    # re-annotation parquet by construction, so they still carry the old flat "CD4".
+    # Only the B arm moves.
+    import lineage as LIN
+
+    has_t = obs["tissue2"].notna()
     arm = pd.Series(pd.NA, index=obs.index, dtype="object")
-    arm[is_cd4 & obs["mal"].eq(True)] = "M"
-    arm[is_cd4 & obs["mal"].eq(False)] = "B"
+
+    if ANNOT == "v2":
+        obs = _apply_lineage(obs)
+        is_mal_cd4 = obs["cell_type_lin"].eq(CONFIG["CD4_LABEL"]) & has_t
+        benign = pd.Series(False, index=obs.index)
+        for t, labs in LIN.CD4_BENIGN.items():
+            benign |= obs["tissue2"].eq(t) & obs["cell_type_lin"].isin(labs)
+        arm[is_mal_cd4 & obs["mal"].eq(True)] = "M"
+        arm[benign & obs["mal"].eq(False)] = "B"
+    else:
+        is_cd4 = obs["cell_type_final"].eq(CONFIG["CD4_LABEL"]) & has_t
+        obs["cell_type_lin"] = obs["cell_type_final"].astype(str)
+        obs["lineage_source"] = LIN.OLD_SOURCE
+        arm[is_cd4 & obs["mal"].eq(True)] = "M"
+        arm[is_cd4 & obs["mal"].eq(False)] = "B"
     obs["arm"] = arm
+    log("arm cells: " + str(obs[obs["arm"].notna()].groupby(["tissue2", "arm"])
+                            .size().to_dict()))
 
     # ---- cohort rules (helpers/target_cohort.py), minus the "same person" rule, which
     #      patient-level aggregation already handles ---------------------------------
@@ -323,19 +435,30 @@ def stage_prep(args):
     excl.to_csv(OUT / "cohort_excluded.csv", index=False)
     log(f"cohort-excluded units: {excl.groupby('tissue2')['unit'].nunique().to_dict()}")
 
-    # ---- blood benign-arm cleanup ---------------------------------------------------
-    cd4 = obs[obs["arm"].notna() & obs["cohort_keep"]]
-    blood_drop = _clean_blood_benign(cd4)
+    # ---- benign-arm composition ------------------------------------------------------
     obs["blood_cd4_sub"] = pd.NA
-    for kind, cells in blood_drop.items():
-        m = obs.index.isin(cells)
-        obs.loc[m, "arm"] = pd.NA
-        obs.loc[m, "drop_reason"] = f"blood benign {kind} cluster"
-        obs.loc[m, "blood_cd4_sub"] = kind      # kept as a partner type, not discarded entirely
+    if ANNOT == "v2":
+        # No hand-built clean-up: the re-annotation already split Treg, naive, CD8, NK/ILC, gdT
+        # and MAIT out of the old flat CD4, in BOTH tissues. Those cells simply never enter the
+        # arm, and they stay available as partner types under their own names.
+        assert not (obs["cell_type_lin"].isin(LIN.NOT_AN_ARM) & obs["arm"].notna()).any(), \
+            "a Mixed / LowQC / Suspect_malignant cell reached an arm"
+        bad = sorted(set(obs.loc[obs["arm"].eq("B"), "cell_type_lin"]) - set().union(
+            *(set(v) for v in LIN.CD4_BENIGN.values())))
+        assert not bad, f"non-CD4 labels reached the benign arm: {bad}"
+        _arm_composition(obs)
+    else:
+        cd4 = obs[obs["arm"].notna() & obs["cohort_keep"]]
+        blood_drop = _clean_blood_benign(cd4)
+        for kind, cells in blood_drop.items():
+            m = obs.index.isin(cells)
+            obs.loc[m, "arm"] = pd.NA
+            obs.loc[m, "drop_reason"] = f"blood benign {kind} cluster"
+            obs.loc[m, "blood_cd4_sub"] = kind   # kept as a partner type, not discarded entirely
 
-    # skin: CD4_Treg is a separate cell_type_final label, so it can never reach either arm
-    assert not (obs["cell_type_final"].eq(CONFIG["TREG_LABEL"]) & obs["arm"].notna()).any(), \
-        "a CD4_Treg-labelled cell reached an arm"
+        # skin: CD4_Treg is a separate cell_type_final label, so it can never reach either arm
+        assert not (obs["cell_type_final"].eq(CONFIG["TREG_LABEL"]) & obs["arm"].notna()).any(), \
+            "a CD4_Treg-labelled cell reached an arm"
 
     # ---- cell counts per unit x arm, eligibility ------------------------------------
     cd4 = obs[obs["arm"].notna() & obs["cohort_keep"]]
@@ -360,21 +483,31 @@ def stage_prep(args):
     keep_units = {t: set(g["unit"]) for t, g in elig.groupby("tissue")}
 
     # ---- partner types ---------------------------------------------------------------
-    part = obs["cell_type_final"].copy()
+    # v2 takes the T/NK partner labels from the re-annotation and everything else (myeloid,
+    # fibroblast, keratinocyte, B, ...) from cell_type_final, which the overlay never touches.
+    part = (obs["cell_type_lin"] if ANNOT == "v2" else obs["cell_type_final"]).copy()
     fix = pd.read_csv(CONFIG["BLOOD_CT_FIX"])            # nb32b: 12 clusters CD8 -> NK
-    part.loc[part.index.isin(fix["cell_id"])] = fix.set_index("cell_id")["cell_type_T"].reindex(
-        part.index[part.index.isin(fix["cell_id"])]).values
+    fixm = part.index.isin(fix["cell_id"])
+    if ANNOT == "v2":
+        # the re-annotation supersedes this hand correction wherever it has an opinion
+        fixm &= obs["lineage_source"].eq(LIN.OLD_SOURCE).to_numpy()
+    part.loc[fixm] = fix.set_index("cell_id")["cell_type_T"].reindex(part.index[fixm]).values
     sub = pd.read_csv(CONFIG["BLOOD_SUBTYPES"], usecols=["cell_id", "subtype_fine"])
     bad = set(sub.loc[sub["subtype_fine"].isin(CONFIG["BLOOD_SUBTYPE_DROP"]), "cell_id"])
     part.loc[part.index.isin(bad)] = pd.NA
     part.loc[part.eq(CONFIG["CD4_LABEL"])] = pd.NA                 # replaced by the arms below
+    if ANNOT == "v2":
+        # unresolved / low-quality / clone-like cells are not a cell type anyone can act on
+        part.loc[part.isin(LIN.NOT_AN_ARM)] = pd.NA
     part.loc[obs["arm"].eq("M")] = "CD4_malignant"
     part.loc[obs["arm"].eq("B")] = "CD4_benign"
-    # Blood has no Treg label, so the clusters the benign-arm cleanup removed are the only Tregs
-    # the compartment can offer. They leave the ARM but stay available as partner types -- the
-    # brief asks explicitly for Tregs among the partners.
-    sub_lab = obs["blood_cd4_sub"]
-    part.loc[sub_lab.notna()] = sub_lab[sub_lab.notna()]
+    if ANNOT == "v1":
+        # Blood has no Treg label, so the clusters the benign-arm cleanup removed are the only
+        # Tregs the compartment can offer. They leave the ARM but stay available as partner
+        # types -- the brief asks explicitly for Tregs among the partners. In v2 the
+        # re-annotation supplies CD4_Treg and CD4_naive directly, in both tissues.
+        sub_lab = obs["blood_cd4_sub"]
+        part.loc[sub_lab.notna()] = sub_lab[sub_lab.notna()]
     for t, bad_t in CONFIG["PARTNER_DROP"].items():
         part.loc[obs["tissue2"].eq(t) & part.isin(bad_t)] = pd.NA
     in_cohort = pd.Series(
@@ -1057,15 +1190,28 @@ def _tissue_results_section(tissue, de, inter, top_n=30):
 
 
 def _report(de_by_tissue, inter_by_tissue, cnt, excl, partners, prior, units, pdl_by_tissue,
-            lr, versions, blood_sub):
+            lr, versions, blood_sub, arm_comp=None, shift=None):
     T = []
     P = T.append
     tissues = [t for t in ("skin", "blood") if t in de_by_tissue]
 
     P("# Differential cell–cell communication of malignant vs benign CD4 T cells (MF/SS atlas)")
     P("")
-    P(f"_Generated {time.strftime('%Y-%m-%d %H:%M')} by `jobs/run_ccc52_mvb.py`. "
+    P(f"_Generated {time.strftime('%Y-%m-%d %H:%M')} by `jobs/run_ccc52_mvb.py --annot {ANNOT}`. "
       f"Skin and blood are analysed completely separately._")
+    P("")
+    if ANNOT == "v2":
+        P("> **Lineage: re-annotated (`nonmal_T_labels_v1`).** The benign arm is `CD4_conv` + "
+          "`CD4_naive` in skin and `CD4_conv` in blood, from a scVI re-annotation of the "
+          "non-malignant T/NK cells that the malignant cells never entered "
+          "(`jobs/run_nonmal_T_reannot.py`). This supersedes `reports/ccc52_mvb/`, which used "
+          "`cell_type_final == \"CD4\"` — an else-branch only ~45.8% conventional CD4 in skin. "
+          "Cytotoxic and Treg genes are the ones that move; see §3.")
+    else:
+        P("> **Lineage: v1 (`cell_type_final == \"CD4\"`), frozen.** That label is an "
+          "else-branch whose benign arm is only ~45.8% conventional CD4 in skin. This output is "
+          "kept to reproduce the published numbers. The current result is "
+          "`reports/ccc52_mvb_v2/`.")
     P("")
 
     # ---- 1. summary
@@ -1117,12 +1263,17 @@ def _report(de_by_tissue, inter_by_tissue, cnt, excl, partners, prior, units, pd
         {"role": "cell metadata", "path": str(CONFIG["OBS_PARQUET"].relative_to(NB_DIR))},
         {"role": "malignancy call, skin", "path": str(CONFIG["MAL_PARQUET"]["skin"].relative_to(NB_DIR))},
         {"role": "malignancy call, blood", "path": str(CONFIG["MAL_PARQUET"]["blood"].relative_to(NB_DIR))},
-        {"role": "blood per-donor clusters (benign-arm cleanup)",
-         "path": str(CONFIG["BLOOD_CLUSTERS"].relative_to(NB_DIR))},
-        {"role": "blood marker expression (10k HVG)", "path": str(CONFIG["BLOOD_T_H5AD"].relative_to(NB_DIR))},
+        *([{"role": "lineage call for non-malignant T/NK (the benign arm)",
+            "path": "data/atlas_joint/nonmal_T_labels_v1.parquet  [via helpers/lineage.py]"}]
+          if ANNOT == "v2" else
+          [{"role": "blood per-donor clusters (benign-arm cleanup)",
+            "path": str(CONFIG["BLOOD_CLUSTERS"].relative_to(NB_DIR))},
+           {"role": "blood marker expression (10k HVG)",
+            "path": str(CONFIG["BLOOD_T_H5AD"].relative_to(NB_DIR))}]),
         {"role": "blood non-T fine labels", "path": str(CONFIG["BLOOD_SUBTYPES"].relative_to(NB_DIR))},
         {"role": "blood CD8→NK correction", "path": str(CONFIG["BLOOD_CT_FIX"].relative_to(NB_DIR))},
-        {"role": "LR resource (rebuilt here)", "path": "reports/ccc52_mvb/lr_resource_1422.csv"},
+        {"role": "LR resource (rebuilt by the `lr` stage)",
+         "path": f"{LR_DIR.relative_to(NB_DIR)}/lr_resource_1422.csv"},
     ])))
     P("")
     P("### obs columns used")
@@ -1167,9 +1318,136 @@ def _report(de_by_tissue, inter_by_tissue, cnt, excl, partners, prior, units, pd
       ", ".join(f"{t} {int(((cnt['tissue'] == t) & ~cnt['eligible']).sum())}"
                 for t in tissues) + ".")
     P("")
-    P("### Blood benign-arm cleanup")
-    P("")
-    P("Blood carries no Treg and no naive-CD4 label (`cell_type_T` is {CD4, CD8, NK}; "
+    if ANNOT == "v2":
+        P("### Benign-arm definition (re-annotated lineage)")
+        P("")
+        P("The benign arm is **not** `cell_type_final == \"CD4\"`. That label is an else-branch: "
+          "nb21 and nb31 hand-mapped Leiden clusters off dot plots and gave `CD4` to every T "
+          "cluster not positively called something else, and in blood the `CD4` transcript was "
+          "not even in the object when the call was made. "
+          "`reports/ccc52_mvb/qc_benign_arm/` measured the result — 21.9% of the skin benign arm "
+          "sat in clusters with CD8A/B detection >= 0.25, with a Treg admixture on top, and "
+          "those are real cells rather than ambient or doublets, so no expression filter could "
+          "remove them.")
+        P("")
+        P("`jobs/run_nonmal_T_reannot.py` rebuilt the call from a scVI embedding of the "
+          "non-malignant T/NK cells that the malignant cells never entered, and wrote a label "
+          "for all 576,188 of them. `helpers/lineage.py` is the only reader. The arm here is "
+          "**`CD4_conv` + `CD4_naive` in skin and `CD4_conv` in blood** — the same naive "
+          "convention v1 had, where the blood clean-up dropped naive clusters and skin kept "
+          "them. `Mixed`, `LowQC` and `Suspect_malignant` never enter an arm. The malignant arm "
+          "is unchanged: malignant cells are absent from the re-annotation by construction, so "
+          "they still carry the old `CD4`, and the script asserts that none of them was "
+          "relabelled.")
+        P("")
+        P("No hand-built blood clean-up is needed any more — the re-annotation supplies "
+          "`CD4_Treg` and `CD4_naive` in both tissues, which is what that step was approximating "
+          "with a FOXP3/CCR7/SELL/TCF7/LEF1 detection rule on per-donor clusters.")
+        P("")
+        if arm_comp is not None:
+            ac = arm_comp.copy()
+            ac["malignant"] = ac["malignant"].astype(str).str.lower().eq("true")
+            ben = ac[~ac["malignant"]]
+            rows = []
+            for t in tissues:
+                g = ben[ben["tissue"] == t]
+                oldcd4 = g[g["label_v1"] == CONFIG["CD4_LABEL"]]
+                rows.append({
+                    "tissue": t,
+                    "old benign CD4 arm": int(oldcd4["n_cells"].sum()),
+                    "kept": int(oldcd4["n_arm_B"].sum()),
+                    "removed by the re-annotation": int(oldcd4["n_cells"].sum()
+                                                        - oldcd4["n_arm_B"].sum()),
+                    "admitted from another v1 label": int(
+                        g.loc[g["label_v1"] != CONFIG["CD4_LABEL"], "n_arm_B"].sum()),
+                    "new benign arm": int(g["n_arm_B"].sum())})
+            P("Net effect on the benign arm, over cohort-eligible cells:")
+            P("")
+            P(_md(pd.DataFrame(rows), floatfmt=0))
+            P("")
+            P("What the removed cells turned out to be (old `CD4`, non-malignant, that no "
+              "longer reach the benign arm, by their new label):")
+            P("")
+            moved = (ben[ben["label_v1"] == CONFIG["CD4_LABEL"]]
+                     .groupby(["tissue", "label_v2"])["n_no_arm"].sum()
+                     .rename("n_cells_removed").reset_index()
+                     .query("n_cells_removed > 0")
+                     .sort_values(["tissue", "n_cells_removed"], ascending=[True, False]))
+            P(_md(moved, floatfmt=0))
+            P("")
+            P("Per old label × new label × malignancy, the whole table is "
+              "`arm_composition.csv`.")
+            P("")
+        if shift is not None:
+            P("#### What this changed in the result")
+            P("")
+            sh = shift.dropna(subset=["log2FC_v1", "log2FC_v2"])
+            cnt_v = (sh.groupby(["tissue", "verdict"]).size().rename("n_genes")
+                     .reset_index().pivot(index="verdict", columns="tissue",
+                                          values="n_genes").fillna(0).astype(int)
+                     .reset_index())
+            P("Every gene fitted under both annotations, by how far its effect size moved:")
+            P("")
+            P(_md(cnt_v, floatfmt=0))
+            P("")
+            P("The genes the benign-arm contamination was inflating, and the controls that "
+              "should not move:")
+            P("")
+            watch = ["CD8A", "CD8B", "KLRD1", "TRDC", "NKG7", "GZMK", "FOXP3",
+                     "TOX", "CD70", "KIR3DL2", "CXCR4", "CCR4"]
+            w = (sh[sh["gene"].isin(watch)]
+                 .assign(order=lambda d: d["gene"].map({g: i for i, g in enumerate(watch)}))
+                 .sort_values(["tissue", "order"])
+                 [["tissue", "gene", "log2FC_v1", "log2FC_v2", "shift_log2FC",
+                   "pct_B_v1", "pct_B_v2"]])
+            P(_md(w, floatfmt=2))
+            P("")
+            P("Read this as two different stories. **In skin the contamination was inflating "
+              "the cytotoxic and Treg effects, and removing it deflates them** — exactly the "
+              "failure the re-annotation was built to fix. **In blood several cytotoxic effects "
+              "get larger, not smaller**, because the v1 blood arm was a flat `CD4` with naive "
+              "and Treg clusters stripped out by a marker rule, while the v2 arm is `CD4_conv` "
+              "proper; its benign cells carry more NKG7 and CCL5 (`pct_B` rises), so the "
+              "malignant-vs-benign gap widens. Neither direction is evidence about the "
+              "malignant clone — both are the benign arm changing underneath it.")
+            P("")
+            P("Full table: `annotation_shift.csv`. **A v1 number whose verdict is not `stable` "
+              "should not be quoted.**")
+            P("")
+            P("#### The arm is defined by genes, so those genes cannot be read as biology")
+            P("")
+            P("The re-annotation routes a cell into the benign arm using the detection of a "
+              f"fixed marker panel, so the M-vs-B contrast of those **{len(LABEL_MARKERS)} "
+              "genes is partly circular**: a cell high in CD8B left the benign arm *because* it "
+              "was high in CD8B. Every table here carries a `label_defining_gene` column; the "
+              "panel is")
+            P("")
+            P("`" + "`, `".join(sorted(LABEL_MARKERS)) + "`")
+            P("")
+            lm = sh[sh["label_defining_gene"] & (sh["significant_v2"] == True)]
+            if len(lm):
+                P("Of these, significant under v2: " + ", ".join(
+                    f"`{r.gene}` ({r.tissue}, log2FC {r.log2FC_v2:+.2f})"
+                    for r in lm.itertuples()) + ".")
+            else:
+                P("None of them is significant under v2.")
+            P("")
+            P("In skin `CD4` and `CD40LG` are significant and were not under v1 — that is the "
+              "selection, not a discovery about the clone. v1 was not free of this either: "
+              "nb21 and nb31 hand-mapped clusters off dot plots of the same markers. The "
+              "difference is that v2 makes the rule explicit, so the affected genes can be "
+              "named. Genes outside the panel — `CD70`, `KIR3DL2`, `TOX`, `PTHLH`, `CXCL13`, "
+              "`DPP4`, `CCR4` — are not touched by it.")
+            P("")
+    elif blood_sub is None:
+        P("### Blood benign-arm cleanup")
+        P("")
+        P("_`blood_benign_subclusters.csv` is absent, so this section cannot be written._")
+        P("")
+    else:
+        P("### Blood benign-arm cleanup")
+        P("")
+        P("Blood carries no Treg and no naive-CD4 label (`cell_type_T` is {CD4, CD8, NK}; "
       "`cell_type_final` has one flat `CD4` over 554,369 cells), so the brief's fallback applies. "
       "The benign blood CD4 cells were scored on the per-donor clusters nb32b had already "
       "computed (`blood_T_clusters_v1.parquet`, Leiden res 1.0, keyed `<donor>__<k>`), using "
@@ -1185,12 +1463,18 @@ def _report(de_by_tissue, inter_by_tissue, cnt, excl, partners, prior, units, pd
       f"and {int(blood_sub['is_naive'].sum())} naive-like; their cells left the benign arm. "
       "Per-cluster numbers are in `blood_benign_subclusters.csv`. In skin no such step is needed: "
       "`CD4_Treg` is its own `cell_type_final` level, and the script asserts that no "
-      "Treg-labelled cell reaches either arm.")
-    P("")
+          "Treg-labelled cell reaches either arm.")
+        P("")
     P("### Partner cell types")
     P("")
-    P(f"A coarse annotation per tissue, taken from `cell_type_final` (which already collapses the "
-      f"nb22 myeloid and fibroblast sub-clusters to major types), with the malignant and benign "
+    src = ("the re-annotated lineage for T/NK cells and `cell_type_final` for everything else "
+           "(myeloid, fibroblast, keratinocyte, B, ...), so both tissues now carry real "
+           "`CD4_Treg`, `CD4_naive`, `CD8`, `NK_ILC`, `gdT` and `MAIT` partners and the nb32b "
+           "CD8->NK hand correction is applied only where the re-annotation has no opinion"
+           if ANNOT == "v2" else
+           "`cell_type_final` (which already collapses the nb22 myeloid and fibroblast "
+           "sub-clusters to major types)")
+    P(f"A coarse annotation per tissue, taken from {src}, with the malignant and benign "
       f"CD4 arms added as types of their own. Pooled over eligible donors of that tissue; types "
       f"below {CONFIG['MIN_PARTNER_CELLS']} cells are dropped.")
     P("")
@@ -1418,12 +1702,18 @@ def _report_end(de_by_tissue, tissues):
         "**geskin2026 was dropped from blood in full**, on the user's instruction. All 260,455 of "
         "its cells are ex vivo 2-day cultures (213,181 drug-treated, 47,274 vehicle), which are "
         "not in-vivo biology.",
-        "**The blood benign arm was cleaned by a cluster marker rule, not a fresh Leiden.** Blood "
-        "has no Treg and no naive-CD4 label, so the brief's fallback applies. Rather than "
-        "re-cluster on the 10-dimensional MrVI u latent, the per-donor clusters nb32b had already "
-        "computed were scored on marker detection fractions — within-donor, so free of batch "
-        "structure. Thresholds and per-cluster numbers are in §3 and "
-        "`blood_benign_subclusters.csv`.",
+        ("**The benign arm is the re-annotated lineage, not `cell_type_final`.** `CD4_conv` + "
+         "`CD4_naive` in skin, `CD4_conv` in blood, from `nonmal_T_labels_v1` via "
+         "`helpers/lineage.py`. The v1 blood Treg/naive cluster clean-up is gone — the "
+         "re-annotation subsumes it, in both tissues. `arm_composition.csv` has the full "
+         "old-label x new-label crosstab."
+         if ANNOT == "v2" else
+         "**The blood benign arm was cleaned by a cluster marker rule, not a fresh Leiden.** "
+         "Blood has no Treg and no naive-CD4 label, so the brief's fallback applies. Rather "
+         "than re-cluster on the 10-dimensional MrVI u latent, the per-donor clusters nb32b "
+         "had already computed were scored on marker detection fractions — within-donor, so "
+         "free of batch structure. Thresholds and per-cluster numbers are in §3 and "
+         "`blood_benign_subclusters.csv`."),
         "**Counts were taken from `joint_annotated.h5ad`, not the compartment objects**, so that "
         "blood is analysed over the full 42,347-gene space rather than a 10,000-gene HVG subset.",
         "**Five prior axes fall outside the filtered resource** (JAML–CXADR, SPN–SIGLEC1, "
@@ -1487,6 +1777,10 @@ def _report_end(de_by_tissue, tissues):
         ("partners.csv", "the partner types that passed the cell-count floor, with their indices"),
         ("cohort_excluded.csv", "every unit removed by a cohort rule, with the reason"),
         ("blood_benign_subclusters.csv", "per-cluster marker detection for the blood benign cleanup"),
+        ("arm_composition.csv", "v1 label × v2 label × malignancy × arm, per tissue — exactly "
+         "what the re-annotation moved"),
+        ("annotation_shift.csv", "per gene, the v1 and v2 effect size side by side with a "
+         "stable / moved verdict"),
         ("units.csv", "the eligible donor × arm pseudobulk index"),
         ("lr_resource_1422.csv", "the rebuilt filtered resource (1,422 interactions)"),
         ("lr_resource_consensus_full.csv", "unfiltered LIANA consensus with per-pair support"),
@@ -1517,6 +1811,57 @@ def _report_end(de_by_tissue, tissues):
     return "\n".join(T)
 
 
+def _annotation_shift(de_by):
+    """v2 only: gene-by-gene, what changed when the benign arm was re-annotated.
+
+    The point of the re-annotation is that some v1 effect sizes were an artefact of CD8/NK/Treg
+    cells sitting in the benign arm. This table is the only honest way to say which, and it is
+    also the only safe way to reuse the v1 report: a gene whose shift is ~0 carries over, a gene
+    that moves does not. Restricted to the LR family plus anything significant in either run, so
+    it stays small enough to read.
+    """
+    out = []
+    for tissue, de2 in de_by.items():
+        src = OUT_BY_ANNOT["v1"] / f"de_all_genes_{tissue}.csv"
+        if not src.exists():
+            log(f"[{tissue}] no v1 fit at {src}; skipping the annotation-shift table")
+            continue
+        de1 = pd.read_csv(src).drop_duplicates("gene").set_index("gene")
+        d2 = de2.drop_duplicates("gene").set_index("gene")
+        # LR family + anything significant in either run + two watchlists that a reader will
+        # always want to check here rather than in the 12,000-row full fit: the genes that
+        # DEFINE the arm, and the pre-specified axes with the TOX positive control.
+        watch = set(LABEL_MARKERS) | {g for g, _, _ in PRIOR_AXES} | {
+            c for _, cog, _ in PRIOR_AXES for c in cog}
+        keep = (set(d2.index[d2["in_lr_resource"].fillna(False)])
+                | set(d2.index[d2["significant"].fillna(False)])
+                | set(de1.index[de1["significant"].fillna(False)])
+                | watch)
+        g = sorted(keep & (set(d2.index) | set(de1.index)))
+        t = pd.DataFrame({"gene": g})
+        t["tissue"] = tissue
+        for name, src_df in (("v1", de1), ("v2", d2)):
+            for col in ("log2FC", "pct_M", "pct_B", "padj", "significant"):
+                t[f"{col}_{name}"] = src_df[col].reindex(g).to_numpy() if col in src_df else np.nan
+        t["shift_log2FC"] = t["log2FC_v2"] - t["log2FC_v1"]
+        t["in_lr_resource"] = d2["in_lr_resource"].reindex(g).fillna(False).to_numpy()
+        t["label_defining_gene"] = t["gene"].isin(LABEL_MARKERS)
+        t["verdict"] = np.where(
+            t["log2FC_v1"].isna() | t["log2FC_v2"].isna(), "fitted in one annotation only",
+            np.where(t["shift_log2FC"].abs() < 0.5, "stable (|shift| < 0.5)",
+                     np.where(t["shift_log2FC"].abs() < 1.5, "moved (0.5-1.5)",
+                              "v1 was driven by the arm (|shift| >= 1.5)")))
+        out.append(t)
+    if not out:
+        return None
+    tab = pd.concat(out, ignore_index=True).sort_values(
+        ["tissue", "shift_log2FC"], key=lambda c: c.abs() if c.name == "shift_log2FC" else c,
+        ascending=[True, False])
+    tab.to_csv(OUT / "annotation_shift.csv", index=False)
+    log("annotation_shift.csv: " + str(tab.groupby(["tissue", "verdict"]).size().to_dict()))
+    return tab
+
+
 def stage_fit(args):
     import os
 
@@ -1529,7 +1874,15 @@ def stage_fit(args):
     partners = pd.read_csv(OUT / "partners.csv")
     cnt = pd.read_csv(OUT / "cell_counts_donor_arm.csv")
     excl = pd.read_csv(OUT / "cohort_excluded.csv")
-    blood_sub = pd.read_csv(OUT / "blood_benign_subclusters.csv")
+    bs_path = OUT / "blood_benign_subclusters.csv"
+    blood_sub = pd.read_csv(bs_path) if bs_path.exists() else None
+    ac_path = OUT / "arm_composition.csv"
+    arm_comp = pd.read_csv(ac_path) if ac_path.exists() else None
+    # the LIANA resource is annotation-independent; mirror it in so the bundle is self-contained
+    import shutil
+    for name in LR_FILES:
+        if not (OUT / name).exists():
+            shutil.copy2(LR_DIR / name, OUT / name)
     lr = pd.read_csv(OUT / "lr_resource_1422.csv")
     lr_full = pd.read_csv(OUT / "lr_resource_consensus_full.csv")
     n_cpus = int(os.environ.get("LSB_DJOB_NUMPROC", "4"))
@@ -1545,9 +1898,10 @@ def stage_fit(args):
         inter, pdet, pcp = _interactions(tissue, de, lr, partners, acc, var, pooled)
         de_by[tissue], inter_by[tissue], pdl_by[tissue], pooled_by[tissue] = de, inter, pdl, pooled
 
+        de["label_defining_gene"] = de["gene"].isin(LABEL_MARKERS)
         cols = ["gene", "role", "baseMean", "log2FC", "log2FC_raw", "lfcSE", "pvalue", "padj",
                 "pct_M", "pct_B", "donors_concordant", "donors_eligible", "fit", "significant",
-                "direction", "tissue", "n_donors"]
+                "direction", "tissue", "n_donors", "label_defining_gene"]
         de.loc[de["in_lr_resource"], cols].sort_values("padj").to_csv(
             OUT / f"de_lr_genes_{tissue}.csv", index=False)
         de[cols].to_csv(OUT / f"de_all_genes_{tissue}.csv", index=False)
@@ -1567,9 +1921,10 @@ def stage_fit(args):
 
     prior = _prior_axes(de_by, lr_full, partners, acc, var, pooled_by)
     prior.to_csv(OUT / "prior_axes.csv", index=False)
+    shift = _annotation_shift(de_by) if ANNOT == "v2" else None
 
     txt = _report(de_by, inter_by, cnt, excl, partners, prior, units, pdl_by, lr,
-                  _versions(), blood_sub)
+                  _versions(), blood_sub, arm_comp, shift)
     path = OUT / "ccc_malignant_vs_benign_cd4_report.md"
     path.write_text(txt)
 
@@ -1612,7 +1967,12 @@ BUNDLE = [
     ("cohort_excluded.csv", "every donor removed by a cohort rule, with the reason", False),
     ("partner_types.csv", "partner cell types and their pooled cell counts per tissue", False),
     ("blood_benign_subclusters.csv", "per-cluster marker detection behind the blood benign-arm "
-     "Treg/naive cleanup", False),
+     "Treg/naive cleanup (v1 arms only)", False),
+    ("arm_composition.csv", "v2 arms only: old label x new label x malignancy x arm, per tissue "
+     "-- exactly which cells the re-annotation moved in and out of the benign arm", False),
+    ("annotation_shift.csv", "v2 arms only: every LR gene and every gene significant in either "
+     "run, with its v1 and v2 log2FC side by side and a stable/moved verdict. READ THIS BEFORE "
+     "reusing any number from reports/ccc52_mvb/", False),
     ("units.csv", "the eligible donor x arm pseudobulk index", False),
     ("lr_resource_1422.csv", "the filtered LR resource: 1,422 interactions with their support", False),
     ("de_all_genes_skin.csv", "SKIN full-transcriptome fit (no padj outside the LR family) -- "
@@ -1649,6 +2009,27 @@ def stage_bundle(args):
 
     def _sz(b):
         return f"{b / 1e6:.1f} MB" if b >= 1e6 else f"{b / 1e3:.0f} KB"
+
+    arms_bullet = (
+"""- **The benign arm is the re-annotated lineage** (`nonmal_T_labels_v1` via
+  `helpers/lineage.py`): `CD4_conv` + `CD4_naive` in skin, `CD4_conv` in blood. It is NOT
+  `cell_type_final == "CD4"`, which is an else-branch only ~46% conventional CD4 in skin.
+  `arm_composition.csv` is the old-label x new-label crosstab. The older bundle in
+  `reports/ccc52_mvb/` used the v1 arm; do not mix numbers between the two for any gene that
+  separates CD4 from CD8/NK/Treg.
+- **The two tissues still differ in one way**: skin keeps naive CD4 in the benign arm and blood
+  does not. That asymmetry is deliberate and inherited from v1.
+- **`label_defining_gene == True` means the contrast for that gene is partly circular.** The
+  benign arm is selected on a marker panel (CD4, CD40LG, CD8A/B, FOXP3, CCR7, SELL, NKG7, GZMK,
+  KLRF1, TRDC, ...), so those genes separate the arms by construction. They are reported, not
+  dropped, because hiding them would hide the arm's composition — but do not quote one as a
+  finding about the malignant clone."""
+        if ANNOT == "v2" else
+"""- **The benign arms are not the same thing in the two tissues.** Skin excludes Tregs via an
+  existing label; blood has no Treg or naive-CD4 label at all, so those cells were removed by a
+  marker rule on per-donor clusters (`blood_benign_subclusters.csv`).
+- **This bundle uses the v1 lineage call**, `cell_type_final == "CD4"`, which is an else-branch
+  only ~46% conventional CD4 in skin. The current result is `reports/ccc52_mvb_v2/`.""")
 
     tab = pd.DataFrame([{"file": n, "size": _sz(b), "rows": ("" if r is None else f"{r:,}"),
                          "contents": d} for n, d, _, b, r in rows])
@@ -1697,9 +2078,7 @@ ambient correction.
 - **Significance in one tissue only is not evidence of tissue specificity.** The compartments
   differ in donor count, cells per arm and benign-arm composition, so they differ in power.
   Section 7 of the report gives the effect-size correlation, which is the comparison that counts.
-- **The benign arms are not the same thing in the two tissues.** Skin excludes Tregs via an
-  existing label; blood has no Treg or naive-CD4 label at all, so those cells were removed by a
-  marker rule on per-donor clusters (`blood_benign_subclusters.csv`).
+{arms_bullet}
 - **Blood CD8 and NK partner rows are mixtures.** The upstream annotation called CD8 on `CD8A`,
   which NK cells also express; only 12 clusters were corrected.
 - **Blood is far more imbalanced than skin** — the benign arm is small in Sezary patients. Check
@@ -1727,8 +2106,14 @@ def main():
     ap.add_argument("stage", choices=sorted(STAGES))
     ap.add_argument("--figures", action="store_true",
                     help="fit stage: also draw the two figures per tissue (off by default)")
+    ap.add_argument("--annot", choices=("v1", "v2"), default="v2",
+                    help="lineage call for the arms: v2 = helpers/lineage.py (default), "
+                         "v1 = the frozen cell_type_final == 'CD4' arm")
     args = ap.parse_args()
-    log(f"stage {args.stage}; output dir {OUT}")
+    global ANNOT, OUT
+    ANNOT = args.annot
+    OUT = OUT_BY_ANNOT[ANNOT]
+    log(f"stage {args.stage}; annot {ANNOT}; output dir {OUT}")
     OUT.mkdir(parents=True, exist_ok=True)
     STAGES[args.stage](args)
     log(f"stage {args.stage} complete")

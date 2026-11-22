@@ -39,9 +39,16 @@ the `wexac-queue-guide` memory.
 
 | Question | Script | Reads | Writes | Status |
 |---|---|---|---|---|
-| Which LR genes does the malignant clone change vs the patient's own benign CD4? | `run_ccc52_mvb.py` (`lr prep pass fit`) | `joint_annotated.h5ad` | `reports/ccc52_mvb/` | **v1-pinned**; re-running reproduces the published numbers. Redoing it on the clean arm is **pending** (see below). |
+| Which LR genes does the malignant clone change vs the patient's own benign CD4? | `run_ccc52_mvb.py --annot v2` (`prep pass fit`; `lr` only to rebuild the resource) | `joint_annotated.h5ad`, `nonmal_T_labels_v1.parquet` | `reports/ccc52_mvb_v2/` | **current.** Benign arm from `helpers/lineage.py`. `--annot v1` regenerates the superseded `reports/ccc52_mvb/` instead. |
 | Degradome / protease axis in the TME | `run_degradome_build.py` builds the object; the analysis is **not yet ported** | `joint_annotated.h5ad` | `data/degradome/skin_degradome.h5ad` | build **current**, analysis **pending port** (`HISTORY.md`) |
 | Healthy-skin degradome reference | `run_external_degradome_build.py` | Reynolds 2021 | external degradome object | **current** |
+
+## Keeping the knowledge base true
+
+| Question | Script | Reads | Writes | Status |
+|---|---|---|---|---|
+| Does `KNOWLEDGE/` still describe the repo? | `run_knowledge_check.py` (`--strict` to fail on ERROR) | `KNOWLEDGE/*.md`, the file tree | `reports/knowledge_check/` | **current**. Runs inline in seconds — no LSF. Checks registration, bundle shape, and every path and `file:line` citation. It cannot tell you whether a number is *right*. |
+| Did the lineage overlay land correctly? | `run_lineage_check.py` | compartment objects + `nonmal_T_labels_v1.parquet` | `reports/lineage_check/` | **current** |
 
 ## Atlas, cohort and metadata
 
@@ -74,29 +81,30 @@ the `wexac-queue-guide` memory.
 
 ## If you want malignant vs benign CD4 expression *today*
 
-This is the most common question and there is no current script for it, so be explicit about
-which of the three routes you are taking:
+This is the most common question and it now has an answer on disk.
 
-1. **Read the existing numbers, with the caveat.** `reports/ccc52_mvb/for_analysis/de_all_genes_{skin,blood}.csv`
-   is a full-transcriptome paired DE (12,248 skin / 12,488 blood genes), not just LR genes.
-   It is **v1-arm**. Usable for the malignant side and for any gene that does not separate CD4
-   from CD8/NK/Treg. **Do not** use it for `CD8A`, `CD8B`, `KLRD1`, `TRDC`, `FOXP3` or anything
-   cytotoxic. Note `padj` is BH over the 1,422-gene LR family only — genes outside it have a
-   p-value and a blank `padj`, so filter on the `significant` column and `donors_concordant`.
-2. **Re-run on the clean arm** (the correct answer, not yet done). Adapt `jobs/run_ccc52_mvb.py`:
-   in `stage_prep`, replace the `cell_type_final == CD4_LABEL` arm construction with
-   `lineage.apply_lineage(obs, tissue)` + `lineage.CD4_BENIGN[tissue]` for the B arm, keep
-   `mal_cluster` for the M arm, and delete the blood Treg/naive cluster clean-up — the
-   re-annotation subsumes it. The `pass` and `fit` stages need no change. Then drop the
-   v1-pinning banner. Budget ~1 h of cluster time after the rework.
-3. **Surface genes only**: `run_target_screen.py --tissue skin` is already migrated, so a fresh
+1. **Read `reports/ccc52_mvb_v2/for_analysis/`** — built 2026-11-22 on the clean arm. Per tissue,
+   `de_all_genes_{skin,blood}.csv` is a full-transcriptome paired DE (11,887 skin / 12,577 blood
+   genes), `de_lr_genes_*` the LR subset. Three columns decide whether a number is usable:
+   - `significant` already encodes padj < 0.05 **and** |log2FC| ≥ 1 **and** detection ≥ 10% in the
+     higher arm. `padj` is BH over the 1,422-gene LR family only, so a gene outside it has a
+     p-value and a blank `padj` — never compare the two.
+   - `donors_concordant` / `donors_eligible` is the per-donor sign check. Quote it.
+   - `label_defining_gene == True` means the arm was *defined* using that gene (CD4, CD40LG,
+     CD8A/B, FOXP3, CCR7, SELL, NKG7, GZMK, KLRF1, TRDC, …). Circular; do not report as biology.
+2. **Before reusing any older number**, check `annotation_shift.csv` in the same bundle: it puts
+   the v1 and v2 effect side by side for every LR gene and gives a verdict. Skin has 23 genes
+   that shift by ≥ 1.5 and 79 more by 0.5–1.5; blood has 5 and 40.
+3. **To regenerate**: `./jobs/run_ccc52_mvb.sh prep --annot v2`, then `pass`, then `fit`, each
+   chained with `AFTER=<jobid>`. ~13 min of cluster time in total (71 s + 312 s + 457 s). The
+   `lr` stage only needs re-running if the LIANA resource itself changed.
+4. **Surface genes only**: `run_target_screen.py --tissue skin` is already migrated, so a fresh
    run gives clean arms over ~2,355 surface genes.
 
 ## Pending — known gaps
 
 | What | Why it matters | Size |
 |---|---|---|
-| **Redo the malignant-vs-benign CCC contrast on the clean arm** | `reports/ccc52_mvb/` is built on the v1 arm, which is only 45.8% conventional CD4 in skin. `run_ccc52_mvb.py` needs `stage_prep` rebuilt around `helpers/lineage.py`; the blood Treg/naive cluster clean-up it does by hand is subsumed by the re-annotation. | ~1 h cluster time plus the rework |
 | **Re-run the surface-target screens on the clean arm** | `tables/tgt4*` and `reports/51_payload_selectivity.md` are v1-arm results. The code is already migrated, so this is a re-run, not a rewrite. | hours |
 | **Port the degradome analysis** (`28_tme_degradome_mc`) | ~4,000 lines, 92 inline functions, currently only in an archived notebook. Its object builder is scripted; the analysis is not. | days |
 | **Port the subclone analysis** (`24_subclone_tcr_signaling`) | Produces `subclones_v4.parquet`, which `run_regimprint_prep.py` and `run_subclone_review_pdf.py` consume. Currently un-regenerable. | days |
