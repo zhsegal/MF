@@ -1,5 +1,9 @@
 # QC of the benign CD4 arm
 
+> **Annotation vintage: v1, by design.** This report characterises the *old* benign CD4 arm —
+> that is its purpose. It is the diagnostic that motivated
+> `data/atlas_joint/nonmal_T_labels_v1.parquet`. See `KNOWLEDGE/RESULTS.md`.
+
 `jobs/run_ccc52_qc.py`, 2026-11-22. Read-only; the v1 arms were re-derived and asserted identical to `../row_labels.npz`.
 
 ## Flagged benign clusters (F) -- any of CD8A, CD8B, TRDC, KLRD1, FOXP3 detected in >= 0.05 of the cluster

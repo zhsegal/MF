@@ -1,5 +1,12 @@
 # 51 - Payload-selectivity screen (Gate 1-3), CD70 TRUCK, MF/CTCL skin
 
+> **Annotation vintage: v1.** Built on `cell_type_final == "CD4"`, whose benign CD4 arm is only
+> ~46% conventional CD4 in skin — 16% CD8, 11% Treg, 8% NK/ILC, 15% unresolved
+> (`reports/lineage_check/`). Statements about the malignant side stand; statements about the
+> *benign* side, and any gene that separates CD4 from CD8/NK/Treg, are confounded. The current
+> lineage call is `data/atlas_joint/nonmal_T_labels_v1.parquet`, read via `helpers/lineage.py`.
+> See `KNOWLEDGE/RESULTS.md`.
+
 _Written by `jobs/run_payload_screen.py` on 2026-11-19 16:42._
 
 Every table below is a CSV block with a header row, printed at 3 significant figures. `q` is BH-adjusted unless the **How** line says otherwise. The on-disk table backing each block is named above it.

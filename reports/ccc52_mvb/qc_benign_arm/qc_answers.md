@@ -1,5 +1,9 @@
 # What the labels actually are (QC of the benign CD4 arm, §2)
 
+> **Annotation vintage: v1, by design.** This report characterises the *old* benign CD4 arm —
+> that is its purpose. It is the diagnostic that motivated
+> `data/atlas_joint/nonmal_T_labels_v1.parquet`. See `KNOWLEDGE/RESULTS.md`.
+
 Read-only provenance review of the labels the v1 fit (`jobs/run_ccc52_mvb.py`) depends on.
 Notebook citations are `notebook / CELL n`, because `.ipynb` JSON has no stable line numbers.
 

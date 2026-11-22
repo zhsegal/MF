@@ -1,5 +1,12 @@
 # Differential cell–cell communication of malignant vs benign CD4 T cells (MF/SS atlas)
 
+> **Annotation vintage: v1.** Built on `cell_type_final == "CD4"`, whose benign CD4 arm is only
+> ~46% conventional CD4 in skin — 16% CD8, 11% Treg, 8% NK/ILC, 15% unresolved
+> (`reports/lineage_check/`). Statements about the malignant side stand; statements about the
+> *benign* side, and any gene that separates CD4 from CD8/NK/Treg, are confounded. The current
+> lineage call is `data/atlas_joint/nonmal_T_labels_v1.parquet`, read via `helpers/lineage.py`.
+> See `KNOWLEDGE/RESULTS.md`.
+
 _Generated 2026-11-22 10:07 by `jobs/run_ccc52_mvb.py`. Skin and blood are analysed completely separately._
 
 ## 1. Summary

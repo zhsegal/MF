@@ -1,5 +1,12 @@
 # Malignant vs benign CD4 differential cell-cell communication — analysis bundle
 
+> **Annotation vintage: v1.** Built on `cell_type_final == "CD4"`, whose benign CD4 arm is only
+> ~46% conventional CD4 in skin — 16% CD8, 11% Treg, 8% NK/ILC, 15% unresolved
+> (`reports/lineage_check/`). Statements about the malignant side stand; statements about the
+> *benign* side, and any gene that separates CD4 from CD8/NK/Treg, are confounded. The current
+> lineage call is `data/atlas_joint/nonmal_T_labels_v1.parquet`, read via `helpers/lineage.py`.
+> See `KNOWLEDGE/RESULTS.md`.
+
 Everything here is plain text. Start with `ccc_malignant_vs_benign_cd4_report.md`; the CSVs are
 the same numbers in machine-readable form. Generated 2026-11-22 10:07 by
 `jobs/run_ccc52_mvb.py`.
