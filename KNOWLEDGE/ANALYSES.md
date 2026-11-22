@@ -72,11 +72,31 @@ the `wexac-queue-guide` memory.
 
 ---
 
+## If you want malignant vs benign CD4 expression *today*
+
+This is the most common question and there is no current script for it, so be explicit about
+which of the three routes you are taking:
+
+1. **Read the existing numbers, with the caveat.** `reports/ccc52_mvb/for_analysis/de_all_genes_{skin,blood}.csv`
+   is a full-transcriptome paired DE (12,248 skin / 12,488 blood genes), not just LR genes.
+   It is **v1-arm**. Usable for the malignant side and for any gene that does not separate CD4
+   from CD8/NK/Treg. **Do not** use it for `CD8A`, `CD8B`, `KLRD1`, `TRDC`, `FOXP3` or anything
+   cytotoxic. Note `padj` is BH over the 1,422-gene LR family only — genes outside it have a
+   p-value and a blank `padj`, so filter on the `significant` column and `donors_concordant`.
+2. **Re-run on the clean arm** (the correct answer, not yet done). Adapt `jobs/run_ccc52_mvb.py`:
+   in `stage_prep`, replace the `cell_type_final == CD4_LABEL` arm construction with
+   `lineage.apply_lineage(obs, tissue)` + `lineage.CD4_BENIGN[tissue]` for the B arm, keep
+   `mal_cluster` for the M arm, and delete the blood Treg/naive cluster clean-up — the
+   re-annotation subsumes it. The `pass` and `fit` stages need no change. Then drop the
+   v1-pinning banner. Budget ~1 h of cluster time after the rework.
+3. **Surface genes only**: `run_target_screen.py --tissue skin` is already migrated, so a fresh
+   run gives clean arms over ~2,355 surface genes.
+
 ## Pending — known gaps
 
 | What | Why it matters | Size |
 |---|---|---|
-| **Redo the malignant-vs-benign CCC contrast on the clean arm** | `reports/ccc52_mvb/` is built on the v1 arm, which is ~20% CD8 and ~20% Treg in skin. `run_ccc52_mvb.py` needs `stage_prep` rebuilt around `helpers/lineage.py`; the blood Treg/naive cluster clean-up it does by hand is subsumed by the re-annotation. | ~1 h cluster time plus the rework |
+| **Redo the malignant-vs-benign CCC contrast on the clean arm** | `reports/ccc52_mvb/` is built on the v1 arm, which is only 45.8% conventional CD4 in skin. `run_ccc52_mvb.py` needs `stage_prep` rebuilt around `helpers/lineage.py`; the blood Treg/naive cluster clean-up it does by hand is subsumed by the re-annotation. | ~1 h cluster time plus the rework |
 | **Re-run the surface-target screens on the clean arm** | `tables/tgt4*` and `reports/51_payload_selectivity.md` are v1-arm results. The code is already migrated, so this is a re-run, not a rewrite. | hours |
 | **Port the degradome analysis** (`28_tme_degradome_mc`) | ~4,000 lines, 92 inline functions, currently only in an archived notebook. Its object builder is scripted; the analysis is not. | days |
 | **Port the subclone analysis** (`24_subclone_tcr_signaling`) | Produces `subclones_v4.parquet`, which `run_regimprint_prep.py` and `run_subclone_review_pdf.py` consume. Currently un-regenerable. | days |

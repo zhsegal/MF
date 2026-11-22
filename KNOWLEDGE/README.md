@@ -38,7 +38,7 @@ not SemanticSCVI.
    Big Bash commands (recursive `find`/`rg` over the tree, reads of the 112 GB atlas) can crash it
    too.
 3. **Lineage comes from `helpers/lineage.py`**, never from a literal `cell_type_final == "CD4"`.
-   That old label is an else-branch and is roughly 20% CD8 and 20% Treg in skin. See
+   That old label is an else-branch: its skin benign arm is only 46% conventional CD4. See
    `CAVEATS.md#the-cd4-label-was-a-default`.
 4. **`data/` is read-only to an analysis.** Outputs go to `reports/` and `tables/`. The one
    exception is a job whose declared purpose is to build a data object.

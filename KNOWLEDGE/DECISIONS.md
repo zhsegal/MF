@@ -7,8 +7,8 @@ Why things are done the way they are. A decision here is binding until it is cha
 ## Lineage comes from `helpers/lineage.py`
 
 Nothing may test `cell_type_final == "CD4"`. The old label is an else-branch
-(`CAVEATS.md#the-cd4-label-was-a-default`); the benign CD4 arm built from it is roughly 20% CD8
-and 20% Treg in skin.
+(`CAVEATS.md#the-cd4-label-was-a-default`); the benign CD4 arm built from it is only 45.8%
+conventional CD4 in skin — 16.1% CD8, 10.9% Treg, 7.7% NK/ILC, 14.9% unresolved.
 
 - `helpers/lineage.py` is the only reader of `data/atlas_joint/nonmal_T_labels_v1.parquet`.
 - `cluster_malig_helpers.read_obs()` applies the overlay by default, so every job that reads obs

@@ -25,6 +25,31 @@ Sizes are rounded. Read the caveat column before using an object.
 | `subclones_v4.parquet` | per cell | Subclone assignment. | Produced by an archived notebook; see `HISTORY.md`. |
 | `tcr_clones.parquet` | per cell | TCR clonotypes. | — |
 
+### The lineage vocabulary
+
+`nonmal_T_labels_v1.parquet`'s `label_new` takes exactly these values:
+
+| Label | Meaning | In the CD4 arm? |
+|---|---|---|
+| `CD4_conv` | conventional CD4 | **yes**, both tissues |
+| `CD4_naive` | CCR7/SELL/TCF7/LEF1 high, S100A4 low | **skin only** (blood drops it, as v1 did) |
+| `CD4_Treg` | FOXP3/IL2RA/IKZF2/CTLA4 high, CD40LG low | no |
+| `CD8` | CD8B, or CD8A with a TCR | no |
+| `gdT` | TRDC/TRGC with CD3E | no |
+| `MAIT` | SLC4A10/KLRB1/TRAV1-2. **Skin has none** — those markers never reach 10% detection in any skin cluster, so they are uninformative there | no |
+| `NK_ILC` | KLRF1/NCAM1/TYROBP, low CD3E, no TCR | no |
+| `Prolif` | MKI67/TOP2A with no clear lineage | no |
+| `LowQC` | low depth and low CD3E | no |
+| `Mixed` | still ambiguous after one round of sub-clustering | no |
+| `Suspect_malignant` | one donor ≥80% of the cluster and one TRBV ≥50% of its TCR+ cells. A **heuristic, not a malignancy call** — it does not override `mal_cluster`; these cells are simply kept out of the benign arm | no |
+
+Plus `"CD4"` — the *old* label, still carried by the malignant cells, which are absent from this
+table. `helpers/lineage.py` keeps it in the CD4 set for exactly that reason. Per-label marker
+profiles are in `reports/nonmal_T_reannot/reannot_label_reference.csv`.
+
+**Healthy donors are included.** The re-annotation covered every donor, healthy controls and
+cohort-excluded donors alike, so the `CD4_HC` arm of the target screens is relabelled too.
+
 `obsm/X_adt` inside `joint_annotated.h5ad` is the only protein layer: 2,157,693 × 128 float32,
 **NaN outside buus25**, names in `uns/adt_panel`. See `CAVEATS.md#adt-exists-for-exactly-one-dataset`.
 
@@ -50,7 +75,7 @@ counts in places — trust the atlas, not that document, for numbers.
 
 | Path | What |
 |---|---|
-| `data/targets/` | Long `(arm, donor, gene)` tables from the surface-target screens; `*_target_long.parquet` + manifest + meta. The screens' real output. |
+| `data/targets/` | Long `(arm, donor, gene)` tables from the surface-target screens; `*_target_long.parquet` + manifest + meta. The screens' real output. Arms are `CD4_malignant`, `CD4_reactive`, `CD4_HC`, `CD8`, `NK` and (since the re-annotation) the other lineage labels. **The existing parquets were built on the v1 label** — re-run the screen to get clean arms. |
 | `data/degradome/skin_degradome.h5ad` | The 945k-cell skin degradome object. |
 | `data/external_ref/` | Reynolds 2021 healthy skin, the surfaceome reference, the GWCD4i Perturb-seq DE (15.6 GB). |
 | `data/clinical/` + `data/clinical_metadata_v1.csv` | The curated clinical layer: 265 samples, 194 persons. Decisions in `docs/CLINICAL_METADATA.md`. |

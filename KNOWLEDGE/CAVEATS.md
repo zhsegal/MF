@@ -14,11 +14,22 @@ blood the `CD4` transcript was not even in the object's 10k HVG when the call wa
 marker was never available. About 20% of blood `CD4` (108,677 cells) comes from a second pass
 over the `Unk` residue.
 
-**How big.** Measured in `reports/ccc52_mvb/qc_benign_arm/`: 161 of 479 skin benign-arm clusters
-(21.9% of its 131,330 cells) have CD8A/CD8B detection ≥ 0.25, and 81 clusters (9.4%) ≥ 0.50 —
-whole clusters at det_CD8A 0.85–0.97, det_NKG7 ≈ 0.9, det_CD4 ≤ 0.16. Blood is the same picture
-at about a quarter the size. Tregs leak in as well: skin benign FOXP3 detection 0.083 against
-0.010 in the malignant arm, and those cells are CD40LG-low, i.e. real Tregs.
+**How big.** Two measurements, which answer different questions — quote the right one.
+
+*Cell level* (`reports/lineage_check/`, the re-annotation's verdict on each cell): the skin v1
+benign arm of 180,978 cells is **45.8% conventional CD4**. The rest is CD8 16.1%, unresolved
+(`Mixed`) 14.9%, Treg 10.9%, NK/ILC 7.7%, Prolif 2.2%, LowQC 1.2%, Suspect_malignant 0.8%,
+γδ 0.5%. Blood: 61.5% CD4_conv, plus naive 14.0% (excluded by the blood arm convention),
+Treg 9.8%, CD8 7.7%.
+
+*Cluster level* (`reports/ccc52_mvb/qc_benign_arm/`, the diagnostic that found the problem):
+161 of 479 skin benign-arm clusters — 21.9% of its cells — have CD8A/CD8B detection ≥ 0.25, and
+81 clusters (9.4%) ≥ 0.50, at det_CD8A 0.85–0.97 and det_CD4 ≤ 0.16. Tregs leak in as well: skin
+benign FOXP3 detection 0.083 against 0.010 in the malignant arm, and those cells are CD40LG-low,
+i.e. real Tregs.
+
+The cluster figure is lower than the cell figure because it only counts cells in clusters that
+cross a detection threshold; the cell figure counts every reassigned cell.
 
 **It is real cells, not ambient and not doublets.** Inside the benign arm CD4 is detected in 3.2%
 of CD8A/B+ cells against 20.8% of CD8A/B− cells (skin); ambient and doublets would raise both.
@@ -75,7 +86,7 @@ compartment. Nothing in the objects flags this asymmetry; it will silently halve
 
 ## Blood CD8 and NK are mixtures
 
-nb31 called CD8 on `CD8A`, which NK cells express as a homodimer. `README.md:85-91` records that
+nb31 called CD8 on `CD8A`, which NK cells express as a homodimer. `README.md` ("Blood" section) records that
 roughly **100 blood clusters carry an NK signature and were never corrected**; only 12 clusters
 (1,716 cells) were relabelled, via `blood_T_celltype_corrections_v1.csv`, which is applied **on
 read only** (`helpers/cluster_malig_helpers.py:apply_celltype_fix`) and never written back.

@@ -29,7 +29,7 @@ Nothing under data/ is written. All output goes to reports/ccc52_mvb/.
 
 ANNOTATION PINNING. This script is pinned to the **v1 lineage call** (`cell_type_final == "CD4"`)
 and is NOT updated to `nonmal_T_labels_v1`. That call is an else-branch: its CD4 arm is roughly
-20% CD8 and 20% Treg in skin (`reports/ccc52_mvb/qc_benign_arm/`). The results already in
+45.8% conventional CD4 in skin (`reports/lineage_check/`). The results already in
 `reports/ccc52_mvb/` were produced with it and are labelled as such in `KNOWLEDGE/RESULTS.md`.
 Re-running this script reproduces those numbers; it does NOT produce current ones. To redo the
 contrast on the clean arm, rebuild `stage_prep` around `helpers/lineage.py`
