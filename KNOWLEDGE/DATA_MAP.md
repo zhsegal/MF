@@ -80,7 +80,7 @@ counts in places — trust the atlas, not that document, for numbers.
 | `data/external_ref/` | Reynolds 2021 healthy skin, the surfaceome reference, the GWCD4i Perturb-seq DE (15.6 GB). |
 | `data/clinical/` + `data/clinical_metadata_v1.csv` | The curated clinical layer: 265 samples, 194 persons. Decisions in `docs/CLINICAL_METADATA.md`. |
 | `data/cache/` | Derived intermediates for MrVI jobs. Regenerable. |
-| `data/_archive_v1/` | The v1 freeze, **read-only**. 251 GB. |
+| data/_archive_v1/ | **Deleted** (confirmed 2026-11-22). Was the 251 GB read-only v1 freeze. **No v1 object is recoverable from disk.** What survives of v1 is documentation only: `docs/archive/ATLAS_V1_PARAMETERS.md` for the parameters and `notebooks/_archive/old/` for the notebooks. Do not tell anyone a v1 artifact can be re-read. |
 | `data/regimprint_nb31/` | Inputs for the regulator-imprint models (`docs/regimprint_v0.2/`). |
 
 ## Conventions

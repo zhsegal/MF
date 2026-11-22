@@ -8,7 +8,7 @@ Also the decoder for artifact filenames, and the record of what each archived no
 
 | When | What |
 |---|---|
-| 2026-05/06 | v1 atlas: Li 2024 replication, SemanticSCVI geometric experiments, early malignancy calls. Frozen in `data/_archive_v1/` (read-only). Parameters: `docs/archive/ATLAS_V1_PARAMETERS.md`. |
+| 2026-05/06 | v1 atlas: Li 2024 replication, SemanticSCVI geometric experiments, early malignancy calls. Was frozen in data/_archive_v1/, **deleted 2026-11-22**; only `docs/archive/ATLAS_V1_PARAMETERS.md` survives. Parameters: `docs/archive/ATLAS_V1_PARAMETERS.md`. |
 | 2026-09-05 | Dedup gate: 45 identity groups, GSE266862 ≡ GSE269981 byte-identical. `docs/ATLAS_V2_DEDUP_GATE.md`. Note it records that `detect_duplicate_cells` does not do what its docstring says. |
 | 2026-09-16 | Repo reorganisation. Notebooks renumbered; spatial arm retired (`docs/SPATIAL_data_map.md`). This is the mtime on most of `docs/` and does not reflect when the content was written. |
 | 2026-10-22 | **`mal_cluster` becomes the headline malignancy call**, replacing `mal_knn` (demoted to a sensitivity arm). Several notebooks retired the same day. Blood `Ambient_soup` rescue decided: **no**. |
@@ -84,8 +84,24 @@ generation including its malignancy call.
   `docs/SPATIAL_data_map.md` in case it reopens.
 - **`jobs/_v1/`** — the v1 degradome drivers. They depend on functions that no longer exist in
   `helpers/degradome_helpers.py` (`jobs/_v1/README.md`).
-- **`jobs/run_notebook.sh`** and `_run_notebook_inner.sh` — the generic notebook executor.
+- **`jobs/run_notebook.sh` (deleted)** and `_run_notebook_inner.sh` — the generic notebook executor.
   Retired with the notebooks; a `run_notebook_<nb>.bsub.log` in `jobs/` is the fossil record of
   which notebooks were ever executed on the cluster.
 - **SemanticSCVI** — this project uses MRVI. The fork is a separate repo, reached only by
   `helpers/delta_axis_helpers.py` via `SCVI_NB_DIR`, and that helper is itself legacy.
+
+## Legacy job drivers, kept but not current
+
+These are headless drivers written for notebooks that are now archived. They still run, but they
+feed a retired analysis, so they are **not** in `ANALYSES.md` — do not reach for one to answer a
+new question without reading it first. Listed here so nobody rewrites one from scratch.
+
+| Script | Drove | Note |
+|---|---|---|
+| `jobs/run_alice_pgen.py` | `old/21_tcr_alice_neighborhood` | OLGA Pgen / ALICE sweep; writes the two caches that notebook read. Still the only ALICE driver. |
+| `jobs/run_ccc_build.py` | nb34–36 (v1 LIANA CCC) | Builds the skin CCC object by streaming `joint_annotated.h5ad`. Superseded for the malignant-vs-benign question by `run_ccc52_mvb.py`. |
+| `jobs/run_clonality_prep.py` | nb37 Parts 0–3 | Heavy CPU prep producing the fold job's input. |
+| `jobs/run_clonality_folds.py` | nb38 Part A | Leave-3-samples-out training of the malignancy-axis arms. |
+| `jobs/run_mrvi_cd4_panel.py` | nb43 | Trains MrVI on a CD4 subset restricted to one gene list; two runs give the matched latents. |
+| `jobs/run_cd4_sweep.py` | `old/19_semantic_cd4_atlas_sweep` | SemanticSCVI hyperparameter sweep. Legacy twice over — the project uses MRVI. |
+| `jobs/regimprint_timing.py` | — | Timing diagnostic for regimprint fits (ms per gradient, NUTS tree size). No model change; a profiler, not an analysis. |

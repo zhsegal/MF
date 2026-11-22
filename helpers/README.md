@@ -64,3 +64,18 @@ Retiring `ccc_helpers.py` + `ccc_data.py` therefore means porting those six into
 and re-validating the degradome outputs. Open follow-up; not a rename.
 
 `ccc_helpers`/`ccc_data` are also what the archived `old/ccc_v1_*` notebooks import.
+
+## Added since this README was first written
+
+Flagged by `jobs/run_knowledge_check.py`, which fails on a helper nobody documented — an
+undocumented helper gets reimplemented by the next agent instead of reused.
+
+| Module | What it is |
+|---|---|
+| `lineage.py` | **The** lineage call. Reads `nonmal_T_labels_v1.parquet`; `CD4_BENIGN`, `CD4_ANY`, `apply_lineage`, `arm_mask`. Never test `cell_type_final == "CD4"` anywhere else. |
+| `bundle.py` | `write_bundle()` — the `reports/<name>/for_analysis/` output contract: generated INDEX.md + CSVs + report.md, binaries refused. |
+| `clinical_meta.py` | The curated clinical layer: `clin_*` obs columns, identity merges, `clin_person_key`. |
+| `cosmx_spatial.py` | CosMx spatial loading and transfer helpers. |
+| `external_ref.py` | External reference datasets (surfaceome, healthy-skin degradome). |
+| `pseq30_helpers.py` | Perturb-seq / pseudobulk DE plumbing, including the `DefaultInference(n_cpus=N)` wiring pydeseq2 needs on both `DeseqDataSet` and `DeseqStats`. |
+| `target_pool.py` | Pooled stratification for the surface-target screens. |

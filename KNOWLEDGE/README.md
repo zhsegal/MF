@@ -74,5 +74,21 @@ writes it; `reports/ccc52_mvb/for_analysis/` is the worked example.
 ## Keeping it true
 
 A claim here carries its source: a `file:line`, a report path, or the run that produced it.
-When an analysis changes a fact, the same change updates this directory. Knowledge that is
-derivable from code belongs in a docstring, not here.
+Knowledge that is derivable from code belongs in a docstring, not here.
+
+**This directory is the thing that survives.** It is in git, it travels with a fresh checkout,
+and it is what a cold-start agent reads. Claude's memory store is not: it lives under
+`.claude-wis/` on one machine, keyed to the working directory, and a new clone has none of it.
+So the rule is one-directional — **a project fact goes in `KNOWLEDGE/`, and memory gets at most
+a one-line pointer to it.** Never the reverse, and never both holding the same number, because
+then they drift and nobody knows which is stale.
+
+The two memories that are exempt are about *how to work*, not about the project:
+`wexac-queue-guide` (job sizing, updated after every run) and `submit-and-watch-jobs`.
+
+`CLAUDE.md` has the step-by-step version of this as "Closing the loop", which is the one an
+agent sees without being told to look. The short form: **update the file whose question your
+work changed the answer to** — `RESULTS.md` for numbers, `ANALYSES.md` for scripts, `CAVEATS.md`
+for defects and for traps in your own method, `DECISIONS.md` for choices, `HISTORY.md` for
+what was superseded. Verify each number against the file on disk as you write it, not from
+memory of what a job printed earlier.

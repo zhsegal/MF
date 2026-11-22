@@ -45,8 +45,9 @@ update that memory with queue, size, pend, runtime and max memory.
 tree, reads of the 112 GB atlas) can crash it and lock the user out. Keep commands cheap and
 scoped. Kernel/env is `neural_nmf_env`; `liana` lives in `mrvi_env`.
 
-**`data/` is near capacity** — check `df` before writing anything large. `data/_archive_v1/` is
-read-only.
+**`data/` is near capacity** — check `df` before writing anything large. The v1 freeze that
+used to sit in data/_archive_v1/ has been deleted; v1 objects are not recoverable
+(`KNOWLEDGE/DATA_MAP.md`).
 
 **Check the annotation vintage before quoting a number.** `KNOWLEDGE/RESULTS.md` records which
 annotation each existing result used. v1 and v2 artifacts share filenames and `_v2`/`_v3`
@@ -64,7 +65,34 @@ add `helpers/` to `sys.path`. Keep helper modules flat in `helpers/` and keep `j
 `helpers/delta_axis_helpers.py` reaching the SemanticSCVI fork via `SCVI_NB_DIR` is the only
 cross-repo dependency; do not add more.
 
-## Progress
+## Closing the loop — do this before you report a result
 
-Log significant changes to the Notion MF / CTCL atlas page per the protocol in the root
-`../.claude/CLAUDE.md`.
+An analysis is not finished when the job exits. It is finished when the next agent can find it.
+Five steps, in this order:
+
+1. **The bundle.** `reports/<name>/for_analysis/` via `helpers/bundle.py`.
+2. **`KNOWLEDGE/`.** Update every file the work touched — this is the step that gets skipped:
+   | You did this | Update |
+   |---|---|
+   | produced numbers someone will quote | `RESULTS.md` — one row: where, **which annotation**, the headline |
+   | wrote or changed a `jobs/run_*.py` | `ANALYSES.md` — the registry row, and strike it from the pending table if it closed a gap |
+   | found a data defect, or a trap in your own method | `CAVEATS.md` — with its blast radius |
+   | chose something a later agent might undo | `DECISIONS.md` |
+   | superseded an artifact | `RESULTS.md` (mark the old row) + `HISTORY.md` |
+   Carry the real number, not a rounded memory of it, and cite the file it came from.
+   **Verify each number against the file on disk before writing it down** — a table you generated
+   earlier in the session may have been regenerated since.
+3. **Claude memory is pointers only.** `KNOWLEDGE/` is the source of truth and the thing that
+   survives; memory is a per-machine cache that a new checkout will not have. Do **not** write a
+   project fact into memory — write it into `KNOWLEDGE/` and, if it changes how an agent should
+   work, add one line to the matching memory pointing there. The exceptions, which are about
+   *how to work* rather than about the project, are `wexac-queue-guide` (update after **every**
+   job: queue, slots, pend, runtime, max mem) and `submit-and-watch-jobs`.
+4. **Notion.** One bullet, per the protocol in the root `../.claude/CLAUDE.md`.
+5. **Check your own work**: `./jobs/run_knowledge_check.sh`. It runs inline in a second and
+   tells you which of the four steps you actually completed — an unregistered bundle, a job
+   nothing documents, a path you moved out from under a citation. Fix what it finds now, while
+   you still remember why. A clean run is not proof the knowledge base is *correct*, only that
+   it is consistent with the file tree: it cannot see a wrong number or a missing caveat.
+
+If you ran out of room to do all five, say so in your reply rather than leaving it silent.

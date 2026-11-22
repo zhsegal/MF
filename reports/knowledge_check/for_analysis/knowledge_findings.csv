@@ -1,0 +1,6 @@
+check,severity,subject,detail,suggested_fix
+job_wrapper,WARN,jobs/run_regimprint_prep.py,"no run_*.sh wrapper, so it has no documented route onto LSF","add the bsub wrapper, or say in ANALYSES.md that it runs inline"
+job_wrapper,WARN,jobs/run_subclone_review_pdf.py,"no run_*.sh wrapper, so it has no documented route onto LSF","add the bsub wrapper, or say in ANALYSES.md that it runs inline"
+path_ref,WARN,KNOWLEDGE/HISTORY.md,"cites `jobs/run_notebook.sh`, which does not exist","update the citation, or say in the text that the file is gone"
+path_ref,WARN,KNOWLEDGE/NOTEBOOK_MAP.md,"cites `data/Li2024_atlas/visium/`, which does not exist","update the citation, or say in the text that the file is gone"
+path_ref,WARN,KNOWLEDGE/NOTEBOOK_MAP.md,"cites `data/cache/mrvi_ctcl_cache.h5ad`, which does not exist","update the citation, or say in the text that the file is gone"
