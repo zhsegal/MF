@@ -1,7 +1,7 @@
 """Per-donor pert2state: patient-specific regulators of the MF malignant-CD4 program.
 
 Helpers for jobs/run_pseq30.py (heavy: signatures, design, fits) and
-notebooks/20_skin/30_perturbseq_per_donor.ipynb (light: statistics, figures, report).
+notebooks/_archive/20_skin/30_perturbseq_per_donor.ipynb (light: statistics, figures, report).
 Extends nb29 (`perturbseq_helpers`): the Perturb-seq design X is built ONCE (cis-masked z, column
 standardization, TruncatedSVD D = 60) and every donor is one elastic net with FROZEN alpha / l1_ratio
 on the same 60-dim gene projection and the same gene folds, so all weights share one coordinate system.

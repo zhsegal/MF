@@ -3,7 +3,7 @@
 # CPU-only (infercnvpy + OLGA); the arm-CNV step uses all allocated cores via os.sched_getaffinity.
 set -eu
 MF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-NB="$MF_DIR/notebooks/20_skin/23_malignancy_tcr_cnv.ipynb"
+NB="$MF_DIR/notebooks/_archive/20_skin/23_malignancy_tcr_cnv.ipynb"
 
 source /home/projects/nyosef/zvise/.local/share/mamba/etc/profile.d/mamba.sh
 mamba activate neural_nmf_env

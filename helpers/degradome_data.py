@@ -42,7 +42,7 @@ Design decisions, with the measurements that forced them.
     silently change the panel between runs. Every symbol below was checked against the v2 var.
 
 The v1 predecessor (749,510 cells, 7 studies, a 156-column protease-only panel, its own frozen
-gate constants) is retired: `notebooks/old/28_tme_degradome_v1.ipynb`, artifacts under
+gate constants) is retired: `notebooks/_archive/old/28_tme_degradome_v1.ipynb`, artifacts under
 `data/degradome/_v1/`, `tables/_v1_deg42/`, `figures/degradome/_v1/`. None of its numbers are
 comparable and none of them are carried here.
 """

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Heavy pipeline for notebooks/20_skin/30_perturbseq_per_donor.ipynb (per-donor pert2state).
+"""Heavy pipeline for notebooks/_archive/20_skin/30_perturbseq_per_donor.ipynb (per-donor pert2state).
 
 Steps (each skipped when its cache exists; delete a cache or bump pseq30_helpers.VER to recompute):
   1. donor table (nb29 cohort, min(n_malignant, n_reactive) >= 600)      -> pseq30_donor_table_v1.csv

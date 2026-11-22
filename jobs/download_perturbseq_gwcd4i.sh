@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download the genome-scale CD4+ T-cell Perturb-seq *DE estimates* (Zhu, Dann et al., Cell 2026;
-# "GWCD4i") used by notebooks/20_skin/29_perturbseq_reverse_engineering.ipynb.
+# "GWCD4i") used by notebooks/_archive/20_skin/29_perturbseq_reverse_engineering.ipynb.
 #
 #   Zhu R., Dann E., Yan J., ... Pritchard J.K., Marson A. (2026) "Genome-scale perturb-seq in
 #   primary human CD4+ T cells maps context-specific regulators of T cell programs and human

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Submit jobs/run_perturbseq_prep.py: compact the 15.6 GB GWCD4i DE h5ad to one condition
-# (default Stim48hr) for notebooks/20_skin/29_perturbseq_reverse_engineering.ipynb.
+# (default Stim48hr) for notebooks/_archive/20_skin/29_perturbseq_reverse_engineering.ipynb.
 # Dense float64 layers are read in row blocks; peak RAM ~40 GB, ~15 min. CPU queue.
 # Usage:
 #   ./run_perturbseq_prep.sh

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Submit a headless run of notebooks/20_skin/29_perturbseq_reverse_engineering.ipynb.
+# Submit a headless run of notebooks/_archive/20_skin/29_perturbseq_reverse_engineering.ipynb.
 # The notebook caches its heavy steps, so a re-run after a fix is cheap.
 #   ./run_nb29.sh            # 150 GB, 24 h, queue long
 #   MEM_MB=200000 ./run_nb29.sh

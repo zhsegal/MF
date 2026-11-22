@@ -80,7 +80,7 @@ cat > "$PROV" <<JSON
   "in_joint_atlas": false,
   "relation_to_atlas": "Li 2024 used this as its healthy-skin annotation reference (DATA_PROVENANCE.md §3, ledger only, not a cohort). Label taxonomy is therefore shared with our cell_type_orig; expression is independent.",
   "known_confounds": ["single cohort/lab", "10x 3' v2 vs our mostly 5'", "all female", "5 donors"],
-  "used_by": ["helpers/external_ref.py", "jobs/run_external_degradome_build.py", "notebooks/20_skin/28_tme_degradome.ipynb §11"]
+  "used_by": ["helpers/external_ref.py", "jobs/run_external_degradome_build.py", "notebooks/_archive/20_skin/28_tme_degradome.ipynb §11"]
 }
 JSON
 echo "[$(date)] wrote $PROV"

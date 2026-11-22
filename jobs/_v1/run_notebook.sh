@@ -9,7 +9,7 @@
 # these 256-core nodes and small linear algebra slows ~50x.
 #
 # Usage:
-#   ./run_notebook.sh notebooks/20_skin/28_tme_degradome_mc.ipynb
+#   ./run_notebook.sh notebooks/_archive/20_skin/28_tme_degradome_mc.ipynb
 #   AFTER=<jobid> ./run_notebook.sh <notebook>          # start when that job is done
 #   MEM_MB=32000 NCPU=4 WALL_H=8 ./run_notebook.sh <notebook>
 set -euo pipefail

@@ -1,5 +1,5 @@
 """Perturb-seq (GWCD4i) reverse-engineering of the MF malignant-CD4 program -- helpers for
-notebooks/20_skin/29_perturbseq_reverse_engineering.ipynb.
+notebooks/_archive/20_skin/29_perturbseq_reverse_engineering.ipynb.
 
 The model is the authors' (Zhu, Dann et al., Cell 2026, Methods "Cell state signature analysis"),
 vendored verbatim in `pert2state_model.py`; everything here is the glue that reproduces their

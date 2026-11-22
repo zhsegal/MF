@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Submit jobs/run_pseq30.py: per-donor signatures + shared design + 30 fixed-hyperparameter fits for
-# notebooks/20_skin/30_perturbseq_per_donor.ipynb. CPU queue; reads the 6.8 GB nb29 CD4 cache and the
+# notebooks/_archive/20_skin/30_perturbseq_per_donor.ipynb. CPU queue; reads the 6.8 GB nb29 CD4 cache and the
 # 5 GB Perturb-seq h5ad (one layer). Peak RAM ~40 GB, ~30-60 min.
 # Usage:
 #   ./run_pseq30.sh

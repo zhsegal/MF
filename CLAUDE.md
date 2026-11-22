@@ -1,55 +1,70 @@
 # MF — CTCL atlas
 
-CTCL / Mycosis Fungoides multi-tissue atlas. **Atlas v2** = 2,157,693 cells, 14 studies
-(1,345,527 skin / 811,024 blood). Uses **MRVI** (`scvi.external.MRVI`), *not* SemanticSCVI.
-Layout and reading order: `README.md`. Pre-reorg notebook numbers: `NOTEBOOK_MAP.md`.
+**Read `KNOWLEDGE/README.md` first.** It is the source of truth for what this project is, where
+the data lives, which script answers which question, and what is known to be broken. This file
+is only the operating rules.
 
-## Path contract — do not break it
+Atlas v2 = 2,157,693 cells, 14 studies (1,345,527 skin / 811,024 blood). Integration is **MRVI**
+(`scvi.external.MRVI`), not SemanticSCVI.
 
-- Notebooks resolve `NB_DIR` by walking up from `cwd` for a directory named **`MF`** containing
-  `data/`. Renaming this directory breaks all 18 of them.
-- Notebooks then `sys.path.insert(0, str(NB_DIR / "helpers"))` and import the modules flat
-  (`import ccc_utils as U`). Keep helper modules directly in `helpers/`, not in sub-packages.
-- Modules in `helpers/` that need the project root use `Path(__file__).resolve().parent.parent`.
-  Never hardcode an absolute path — two modules did, and the move broke them.
-- `helpers/delta_axis_helpers.py` imports `_pert_utils`, `benchmark_modalities` and
-  `factor_evidence` from the SemanticSCVI fork via `SCVI_NB` (env: `SCVI_NB_DIR`). That is the
-  only cross-repo dependency; do not add more.
+## The shape of the project
 
-## v1 vs v2 — the failure mode to avoid
+```
+data/        ~612 GB of objects. An analysis READS it and never writes to it.
+jobs/        the only execution surface: run_<x>.py + its run_<x>.sh bsub wrapper
+helpers/     library code the jobs import (flat modules, no sub-packages)
+reports/     output, one directory per analysis, each ending in for_analysis/
+KNOWLEDGE/   the knowledge base — start here
+docs/        source material and superseded specs; linked from KNOWLEDGE, not browsed directly
+notebooks/_archive/   retired. Never run.
+```
 
-v1 and v2 artifacts share filenames. `11_atlas_v2_qc` exists because a notebook once reported v1
-numbers on a v2 input. Before quoting anything: confirm the input is a v2 object
-(`atlas_obs_full_v2.parquet`, `joint_*`, `skin_T_annotated.h5ad`, `blood_T_annotated.h5ad`), and
-note that `_v2`/`_v3` suffixes are **not** reliable recency markers — `skin_T_annotated_v2.h5ad`
-was older than the unsuffixed file. The v1 freeze is `data/_archive_v1/`; it is read-only.
+## Rules
 
-Malignancy call revisions are versioned in the filename (`skin_T_malignancy_v5.parquet`,
-`blood_T_malignancy_v3.parquet`). Check which revision a notebook pins before comparing results.
+**Never run a notebook.** They are archived under `notebooks/_archive/` as the record of how
+frozen artifacts were made. If an archived analysis is needed again, port it to `jobs/` first —
+`KNOWLEDGE/HISTORY.md` says what each one did and which are already scripted.
 
-## Compute
+**Lineage comes from `helpers/lineage.py`.** Never test `cell_type_final == "CD4"`. That label is
+an else-branch and its benign CD4 arm is only ~46% conventional CD4 in skin
+(`KNOWLEDGE/CAVEATS.md`). `cluster_malig_helpers.read_obs()` applies the overlay by default; the
+one place that opts out is the frozen `mal_cluster` pipeline, which the labels were derived from.
 
-- Kernel `neural_nmf_env`. **Never run heavy jobs on the login node** — training,
-  `get_normalized_expression`, inferCNV, full-notebook execution, large fits. Claude submits them
-  via `jobs/*.sh` (bsub) and watches them to completion (root CLAUDE.md "Compute"). Notebooks:
-  `QUEUE=… NCPU=… MEM_MB=… WALL_H=… jobs/run_notebook.sh <nb>` (executes in place, log
-  `jobs/run_notebook_<name>.bsub.log`). Big/expensive Bash (recursive `find`/`rg` over the tree,
-  reads of the 112 GB atlas) can crash the login node too — keep commands scoped.
-- `data/` is ~815 GB (375 GB `atlas_joint`, 251 GB `_archive_v1`, the rest raw cohorts) on a
-  volume that runs near capacity. Check `df` before writing anything large.
+**Every analysis ends in a bundle.** `reports/<name>/for_analysis/` = generated `INDEX.md` +
+plain CSVs + `report.md`, written by `helpers/bundle.py`. No figures, no binaries — it is meant
+to be pasted whole into another model, so it must orient its own reader. Figures are opt-in.
 
-## Notebooks
+**Heavy work goes to LSF, never the login node.** Claude submits it (`./jobs/run_<x>.sh`),
+watches it to the end, reads the log, fixes and resubmits on failure, and tells the user only
+when it has finished with outputs in place. Pick the queue from the `wexac-queue-guide` memory
+and right-size cpu/mem. `short` is **preemptable**, so jobs must be idempotent and write at the
+end; a job that exits instantly with an empty log was preempted — just resubmit. After each job,
+update that memory with queue, size, pend, runtime and max memory.
 
-- Edit `.ipynb` with the `NotebookEdit` tool. Never use the Jupyter MCP.
-- Never execute notebooks on the login node. After an edit, submit with `jobs/run_notebook.sh`,
-  watch the job, fix failures, and tell the user only once it has finished completely.
-- Outputs: prefer `.shape`/`.head()`; print `adata`, not `.to_df()`.
-- `polars` > `pandas` for big frames; `pathlib` > `os.path`.
-- Artifact filenames encode the notebook that wrote them using **pre-reorg** numbers
-  (`figures/nb38_*`, `tables/ccc40_*`, `tables/deg42_*`). They are read back by code — don't
-  rename them.
+⚠️ **The login node is fragile.** Heavy jobs AND expensive Bash (recursive `find`/`rg` over the
+tree, reads of the 112 GB atlas) can crash it and lock the user out. Keep commands cheap and
+scoped. Kernel/env is `neural_nmf_env`; `liana` lives in `mrvi_env`.
+
+**`data/` is near capacity** — check `df` before writing anything large. `data/_archive_v1/` is
+read-only.
+
+**Check the annotation vintage before quoting a number.** `KNOWLEDGE/RESULTS.md` records which
+annotation each existing result used. v1 and v2 artifacts share filenames and `_v2`/`_v3`
+suffixes are not recency markers.
+
+**Artifact filenames encode pre-reorg notebook numbers** (`tables/deg28mc_*`, `tables/tgt49_*`,
+`figures/nb38_*`). They are read back by code — do not rename them. `KNOWLEDGE/HISTORY.md`
+decodes them.
+
+## Path contract
+
+`helpers/` modules resolve the project root as `Path(__file__).resolve().parent.parent`, and jobs
+add `helpers/` to `sys.path`. Keep helper modules flat in `helpers/` and keep `jobs/` and
+`helpers/` in the same parent. Never hardcode an absolute path.
+`helpers/delta_axis_helpers.py` reaching the SemanticSCVI fork via `SCVI_NB_DIR` is the only
+cross-repo dependency; do not add more.
 
 ## Progress
 
-Log significant changes to the Notion page per the protocol in root `../.claude/CLAUDE.md`
-(this project → the MF / CTCL atlas page).
+Log significant changes to the Notion MF / CTCL atlas page per the protocol in the root
+`../.claude/CLAUDE.md`.

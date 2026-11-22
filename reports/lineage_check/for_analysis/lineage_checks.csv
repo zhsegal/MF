@@ -1,0 +1,8 @@
+check,pass,detail
+label table covers skin,True,"257,297 vs expected 257,297"
+label table covers blood,True,"318,891 vs expected 318,891"
+no malignant cell carries a new label,True,0 offenders
+every labelled cell was a T/NK cell before,True,other labels: []
+read_obs(lineage=False) keeps the old vocabulary,True,"values ['CD4', 'CD4_Treg', 'CD8']"
+read_obs(lineage=True) applies the new vocabulary,True,"196,548 cells moved"
+mal_cluster composition inputs unchanged,True,composition is computed on the pre-overlay column by construction

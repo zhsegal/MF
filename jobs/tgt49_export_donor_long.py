@@ -93,6 +93,7 @@ sys.path.insert(0, str(NB_DIR / "jobs"))
 
 import cluster_malig_helpers as CM              # noqa: E402
 import malignancy as MAL                        # noqa: E402
+import lineage as LIN
 import surface_targets as ST                    # noqa: E402
 import target_cohort as TC                      # noqa: E402
 import target_het as TH                         # noqa: E402
@@ -243,7 +244,7 @@ def cell_arms(long):
                                ).astype(str), index=obs.index)
     don_tbl = TC.donor_table(TISSUE, obj=cfg["obj"])
     donor = obs[cfg["donor"]].astype(str)
-    is_cd4 = obs[cfg["celltype"]].astype(str).eq("CD4").to_numpy()
+    is_cd4 = obs[cfg["celltype"]].astype(str).isin(LIN.CD4_ANY).to_numpy()
     is_hc = donor.map(don_tbl["is_hc"]).fillna(False).to_numpy()
     lvl[is_cd4 & is_hc] = HC
 

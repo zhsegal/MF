@@ -1,5 +1,16 @@
 # MF — CTCL / Mycosis Fungoides multi-tissue atlas
 
+> **This is no longer the entry point — read `KNOWLEDGE/README.md` first.**
+>
+> What is still accurate here: the atlas numbers, the malignancy-call policy, the cohort and
+> donor-truth facts, and the label caveats. All of it is carried, with its blast radius, into
+> `KNOWLEDGE/` (`PROJECT.md`, `DECISIONS.md`, `CAVEATS.md`, `DATA_MAP.md`).
+>
+> What is stale: the "reading order" sections describe notebooks that were retired on
+> 2026-11-22 and are now under `notebooks/_archive/`. **Notebooks are never run.** The
+> executable equivalent of each track is in `KNOWLEDGE/ANALYSES.md`. Also note this file says
+> blood malignancy is v4 while the old `CLAUDE.md` said v3 — v4 is correct.
+
 An integrated single-cell atlas of cutaneous T-cell lymphoma (MF / Sézary syndrome) built from
 the Li–Haniffa 2024 skin atlas plus the published GEO/ArrayExpress cohorts, with paired TCR where
 the deposit allows it. **Atlas v2** (rebuilt 2026-09-05) is 2,157,693 cells over 14 studies —
